@@ -10,11 +10,12 @@ import { watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useSocketStore, useUserStore } from '@/stores'
 import { showNotify, Notify } from 'vant'
-import { h } from 'vue'
 import 'vant/es/notify/style'
-import MessageDialogAvatar from './components/MessageDialogAvatar.vue'
 import keyboardDirective from './directives/keyboard'
 import '@/assets/css/my-icon/iconfont.css'
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
 
 const app = createApp(App)
 
@@ -71,6 +72,8 @@ watch(latest, (msg) => {
         duration: 3000,
         message: notificationText
     })
+
+
 }
 )
 

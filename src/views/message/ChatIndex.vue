@@ -37,36 +37,32 @@ const handleNewMessage = (message) => {
 
 const chatContainer = ref(null)
 
-// 修改 scrollToBottom 函数
+// 修改 scrollToBottom 函数 - 使用更精确的选择器和多重尝试
 const scrollToBottom = () => {
     nextTick(() => {
-        if (chatContainer.value) {
-            // 如果是原生DOM元素
-            if (chatContainer.value.scrollTop !== undefined) {
-                chatContainer.value.scrollTop = chatContainer.value.scrollHeight
-            } else {
-                // 如果是Vue组件实例，需要获取其根元素
-                const element = chatContainer.value.$el || chatContainer.value
-                if (element && element.scrollTop !== undefined) {
+        setTimeout(() => {
+            // 尝试多种方式获取滚动容器
+            const selectors = [
+                '.van-pull-refresh__track',
+                '.container',
+                '.van-pull-refresh'
+            ]
+
+            for (let selector of selectors) {
+                const element = document.querySelector(selector)
+                if (element && element.scrollHeight > 0) {
                     element.scrollTop = element.scrollHeight
+                    break
                 }
             }
-        } else {
-            // 备用方案：直接操作DOM
-            const container = document.querySelector('.container')
-            if (container) {
-                container.scrollTop = container.scrollHeight
+
+            // 如果上面的方法都不行，尝试直接滚动整个页面
+            if (document.body.scrollHeight > window.innerHeight) {
+                window.scrollTo(0, document.body.scrollHeight)
             }
-        }
+        }, 100)
     })
 }
-
-// 监听聊天记录变化，自动滚动到底部
-watch(chatRecord, () => {
-    nextTick(() => {
-        scrollToBottom()
-    })
-}, { deep: true })
 
 onMounted(async () => {
     // 注册聊天回调
@@ -78,6 +74,11 @@ onMounted(async () => {
         friendId: friendId
     })
     chatRecord.value = data.list.slice().reverse()
+
+    // 额外延时确保完全加载
+    setTimeout(() => {
+        scrollToBottom()
+    }, 500)
 })
 
 const refreshing = ref(false)
@@ -112,6 +113,9 @@ const content = ref('')
 
 const commentInput = ref(null)
 const publish = async () => {
+    if (!content.value.trim()) {
+        return
+    }
     socketStore.sendMessage(friendId, content.value)
     chatRecord.value.push({
         'fromId': userStore.userInfo.id,
@@ -120,6 +124,10 @@ const publish = async () => {
         'createdAt': new Date().toISOString()
     })
     content.value = ''
+    // 发送消息后立即滚动
+    setTimeout(() => {
+        scrollToBottom()
+    }, 50)
 }
 </script>
 
@@ -245,6 +253,7 @@ const publish = async () => {
     margin-top: 50px;
     padding: 10px;
     min-height: calc(100vh - 100px); // 确保容器有足够高度
+    overflow-y: auto;
 
     .item {
         display: flex;
