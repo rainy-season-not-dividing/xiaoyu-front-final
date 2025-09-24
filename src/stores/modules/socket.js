@@ -17,7 +17,7 @@ export const useWebSocketStore = defineStore('websocket', () => {
     /* 三段存储 */
     const system = ref([]) // 系统消息
     const interactive = ref([]) // 互动消息
-    const chatMap = new Map() // 私信消息（按发送者ID存储最新消息）
+    const chatMap = ref(new Map()) // 私信消息（按发送者ID存储最新消息）
 
     // 连接状态
     const isConnected = ref(false)
@@ -27,6 +27,7 @@ export const useWebSocketStore = defineStore('websocket', () => {
     /* 计算属性：按「系统→互动→私信」拼接顺序 */
     const displayList = computed(() => {
         const result = []
+
 
         // 添加最新的系统消息（显示最新）
         if (system.value && system.value.length > 0) {
@@ -39,16 +40,15 @@ export const useWebSocketStore = defineStore('websocket', () => {
         }
 
         // 添加私信消息（每个好友的最新一条）
-        if (chatMap && chatMap.size > 0) {
-            for (const message of chatMap.values()) {
+        if (chatMap.value && chatMap.value.size > 0) {
+            for (const message of chatMap.value.values()) {
                 if (message) {
                     result.push(message)
                 }
             }
         }
 
-        // 按时间倒序排列
-        return result.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        return result
     })
 
     // 聊天界面回调函数存储
@@ -238,7 +238,11 @@ export const useWebSocketStore = defineStore('websocket', () => {
     // 处理私信消息
     const handlePrivateMessage = (payload) => {
         // 存储私信消息（按发送者ID存储最新消息）
-        chatMap.set(payload.from_user_id, payload)
+        chatMap.value.set(payload.from_user_id, payload)
+        console.log('---------------------------')
+        console.log(displayList.value.length)
+        console.log(displayList.value)
+        console.log('---------------------------')
 
         // 如果有对应的聊天界面回调，则调用
         const callback = chatCallbacks.get(payload.from_user_id)
@@ -293,7 +297,7 @@ export const useWebSocketStore = defineStore('websocket', () => {
         chatCallbacks.clear()
         system.value = []
         interactive.value = []
-        chatMap.clear()
+        chatMap.value.clear()
         latest.value = null
         userToken.value = null
     }
@@ -372,6 +376,37 @@ export const useWebSocketStore = defineStore('websocket', () => {
         sendHeartbeat,
         registerChatCallback,
         unregisterChatCallback
+    }
+}, {
+    persist: {
+        key: 'user-websocket-data',
+        paths: ['system', 'interactive', 'chatMap'],
+        storage: localStorage,
+        serializer: {
+            serialize: (state) => {
+                // 正确序列化指定的字段
+                return JSON.stringify({
+                    system: state.system,
+                    interactive: state.interactive,
+                    chatMap: Array.from(state.chatMap.entries()) // Map转为数组进行序列化
+                })
+            },
+            deserialize: (value) => {
+                if (!value) return {}
+
+                try {
+                    const parsed = JSON.parse(value)
+                    // 将chatMap数组转换回Map对象
+                    if (parsed.chatMap) {
+                        parsed.chatMap = new Map(parsed.chatMap)
+                    }
+                    return parsed
+                } catch (error) {
+                    console.error('反序列化失败:', error)
+                    return {}
+                }
+            }
+        }
     }
 })
 

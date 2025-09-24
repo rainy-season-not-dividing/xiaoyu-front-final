@@ -1,12 +1,11 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import defaultAvatar from '@/assets/image/default.png'
 import { getChatRecord } from '@/api/friends'
 import { timeAgo } from '@/utils/timeFormat'
-import { useUserStore } from '@/stores'
+import { useUserStore, useSocketStore } from '@/stores'
 import { handleInputFocus, handleInputBlur } from '@/utils/moveKeyboard'
-import { useSocketStore } from '@/stores'
 
 const userStore = useUserStore()
 
@@ -35,6 +34,39 @@ const handleNewMessage = (message) => {
         })
     }
 }
+
+const chatContainer = ref(null)
+
+// 修改 scrollToBottom 函数
+const scrollToBottom = () => {
+    nextTick(() => {
+        if (chatContainer.value) {
+            // 如果是原生DOM元素
+            if (chatContainer.value.scrollTop !== undefined) {
+                chatContainer.value.scrollTop = chatContainer.value.scrollHeight
+            } else {
+                // 如果是Vue组件实例，需要获取其根元素
+                const element = chatContainer.value.$el || chatContainer.value
+                if (element && element.scrollTop !== undefined) {
+                    element.scrollTop = element.scrollHeight
+                }
+            }
+        } else {
+            // 备用方案：直接操作DOM
+            const container = document.querySelector('.container')
+            if (container) {
+                container.scrollTop = container.scrollHeight
+            }
+        }
+    })
+}
+
+// 监听聊天记录变化，自动滚动到底部
+watch(chatRecord, () => {
+    nextTick(() => {
+        scrollToBottom()
+    })
+}, { deep: true })
 
 onMounted(async () => {
     // 注册聊天回调
@@ -81,13 +113,13 @@ const content = ref('')
 const commentInput = ref(null)
 const publish = async () => {
     socketStore.sendMessage(friendId, content.value)
-    content.value = ''
     chatRecord.value.push({
         'fromId': userStore.userInfo.id,
         'toId': friendId,
         'content': content.value,
         'createdAt': new Date().toISOString()
     })
+    content.value = ''
 }
 </script>
 
@@ -113,7 +145,7 @@ const publish = async () => {
         </van-nav-bar>
 
         <van-pull-refresh v-model="refreshing" @refresh="onRefresh">
-            <div class="container">
+            <div class="container" ref="chatContainer">
                 <div class="item" v-for="item in chatRecord" :key="item.id"
                     :class="{ 'self': item.fromId === userStore.userInfo.id, 'other': item.fromId !== userStore.userInfo.id }">
                     <div class="avatar">
@@ -133,7 +165,7 @@ const publish = async () => {
         <div class="inp" v-keyboard ref="commentInput">
             <textarea v-model="content" @focus="handleInputFocus(commentInput)" @blur="handleInputBlur" />
             <div class="publish-button">
-                <van-button @click="publish" type="primary">发布</van-button>
+                <van-button @click="publish" type="primary">发送</van-button>
             </div>
         </div>
     </div>
@@ -141,7 +173,6 @@ const publish = async () => {
 
 <style lang="less" scoped>
 .chat {
-    height: 100vh;
 
     .inp {
         padding: 10px;
@@ -175,7 +206,7 @@ const publish = async () => {
         }
 
         :deep(.van-button) {
-            width: 60px;
+            width: 65px;
             height: 30px;
             border-radius: 30px;
         }
@@ -274,6 +305,10 @@ const publish = async () => {
                     border-top-right-radius: 0px;
                 }
             }
+        }
+
+        &:last-child {
+            margin-bottom: 60px; // 给最后一条消息底部留出空间
         }
     }
 }

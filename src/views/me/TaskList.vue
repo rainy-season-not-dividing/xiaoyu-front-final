@@ -14,9 +14,9 @@
     const onClickRight = () => {
       managing.value = !managing.value
     };
-    const checkedStatus = ref([])
-    const checkboxGroup = ref(null)
-    const checkedStatus_temp = ref([])
+    const checkedStatus = ref("")
+
+    const checkedStatus_temp = ref("")
 
     //点击筛选的时候将checkedStatus_temp赋值给checkedStatus
     //选的时候改的是checkedStatus,实际传递给组件的是checkedStatus_temp
@@ -24,24 +24,14 @@
     //若取消，则将checkedStatus_temp赋值给checkedStatus
     //若确定，将checkedStatus赋值给checkedStatus_temp
 
-    // 全选/取消全选功能
-    const toggleAll = () => {
-      if (checkboxGroup.value) {
-        if (checkedStatus.value.length === 0) {
-          // 全选所有状态
-          checkedStatus.value = ['RUNNING', 'FINISH', 'CLOSED', 'RECRUIT', 'AUDITING', 'ARBITRATED']
-        } else {
-          // 取消全选
-          checkedStatus.value = []
-        }
-      }
-    }
+
 
     // 确定按钮处理函数
     const Confirm = () => {
       // 处理筛选逻辑
       console.log('选中的状态:', checkedStatus.value)
-      checkedStatus_temp.value=checkedStatus.value
+      checkedStatus_temp.value = checkedStatus.value
+      console.log('checkedStatus_temp.value:', checkedStatus_temp.value)
       showconfirm.value = !showconfirm.value
       // 这里可以添加实际的筛选逻辑
     }
@@ -56,61 +46,45 @@
 </script>
 
 <template>
-    <div class="filter-section" v-if="managing&&active===0" >
-        <van-button 
-          icon="filter-o" 
-          type="default" 
-          size="small" 
-          @click="showconfirm = true"
-          class="filter-button"
-        >
-          筛选
-        </van-button>
-    </div>
-    <van-sticky class="sticky-component">
-      <van-nav-bar
-      title="任务中心"
-      left-text=""
-      left-arrow
-      :right-text="managing ? '取消' : '管理'"
-      
-      @click-left="onClickLeft"
-      @click-right="onClickRight"
-      class="custom-nav-bar"
-    />
-    </van-sticky>
-    <van-tabs v-model:active="active" class="tabs">
-      <keep-alive>
-        <TaskSendList :isManaging="managing" :sortList="checkedStatus_temp"></TaskSendList>
-      </keep-alive>
-      <keep-alive>
-        <TaskReceiveList :isManaging="managing"></TaskReceiveList>
-      </keep-alive>
-      
-      
-    </van-tabs>
-    <div class="modal" v-show="showconfirm">
-      <div class="modal-content">
-        <h2 class="title-sort">筛选条件</h2>
-        <div class="content-sort">
-            <van-checkbox-group v-model="checkedStatus" ref="checkboxGroup">
-                  <!-- <van-checkbox ></van-checkbox> -->
+  <div class="filter-section" v-if="managing&&active===0">
+    <van-button icon="filter-o" type="default" size="small" @click="showconfirm = true" class="filter-button">
+      筛选
+    </van-button>
+  </div>
+  <van-sticky class="sticky-component">
+    <van-nav-bar title="任务中心" left-text="" left-arrow :right-text="managing ? '取消' : '管理'" @click-left="onClickLeft"
+      @click-right="onClickRight" class="custom-nav-bar" />
+  </van-sticky>
+  <van-tabs v-model:active="active" class="tabs">
+    <keep-alive>
+      <TaskSendList :isManaging="managing" :checkbox_temp="checkedStatus_temp"></TaskSendList>
+    </keep-alive>
+    <keep-alive>
+      <TaskReceiveList :isManaging="managing"></TaskReceiveList>
+    </keep-alive>
 
-                  <van-checkbox name="RUNNING" shape="round" class="sort-option">进行中</van-checkbox>
-                  <van-checkbox name="FINISH" shape="round" class="sort-option">已完成</van-checkbox>
-                  <!-- <van-checkbox name="CLOSED" shape="round" class="sort-option">已关闭</van-checkbox> -->
-                  <van-checkbox name="RECRUIT" shape="round" class="sort-option">招募中</van-checkbox>
-                  <van-checkbox name="AUDITING" shape="round" class="sort-option">审核中</van-checkbox>
-                  <van-checkbox name="ARBITRATED" shape="round" class="sort-option">审核未通过</van-checkbox>
-            </van-checkbox-group>
-          </div>
-        <div class="yes-no">
-          <input type="button" value="确定" class="yes" @click="Confirm">
-          <input type="button" value="取消" class="no" @click="Cancel">
-        </div>  
-          
+
+  </van-tabs>
+  <div class="modal" v-show="showconfirm">
+    <div class="modal-content">
+      <h2 class="title-sort">筛选条件</h2>
+      <div class="content-sort">
+        <van-radio-group v-model="checkedStatus" ref="radioGroup">
+          <van-radio name="RUNNING" shape="round" class="sort-option">进行中</van-radio>
+          <van-radio name="FINISH" shape="round" class="sort-option">已完成</van-radio>
+          <!-- <van-radio name="CLOSED" shape="round" class="sort-option">已关闭</van-radio> -->
+          <van-radio name="RECRUIT" shape="round" class="sort-option">招募中</van-radio>
+          <van-radio name="AUDITING" shape="round" class="sort-option">审核中</van-radio>
+          <van-radio name="ARBITRATED" shape="round" class="sort-option">审核未通过</van-radio>
+        </van-radio-group>
       </div>
+      <div class="yes-no">
+        <input type="button" value="确定" class="yes" @click="Confirm">
+        <input type="button" value="取消" class="no" @click="Cancel">
+      </div>
+
     </div>
+  </div>
 
 
 </template>

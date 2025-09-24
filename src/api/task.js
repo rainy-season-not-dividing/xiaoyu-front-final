@@ -94,7 +94,7 @@ export const getMyReceiveTaskList = () => {
 //发布者：
 //111接受任务订单     `PUT /api/task_orders/{order_id}/accept`
 export const acceptTaskOrder = (task_id) => {
-    return request.put(`/api/task_orders/${task_id}` / refuse)
+    return request.put(`/api/task_orders/${task_id}/accept`)
 }
 //111拒绝任务订单     PUT /api/task_orders/{order_id}/refuse`
 export const rejectTaskOrder = (task_id) => {

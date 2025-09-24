@@ -4,7 +4,7 @@ import { ref, onMounted } from 'vue'
 import defaultAvatar from '@/assets/image/default.png'
 import { getFriendsList } from '@/api/friends'
 import { readNotice } from '@/api/notice'
-import { useNoticeStore, useSocketStore } from '@/stores'
+import { useSocketStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 
 const { displayList, chatMap } = storeToRefs(useSocketStore())
@@ -18,12 +18,7 @@ const friendsList = ref([])
 onMounted(async () => {
     const { data: { data } } = await getFriendsList({ page: 0, size: 0, status: 'ACCEPTED' })
     friendsList.value = data.list
-    console.log(friendsList.value)
 })
-
-
-const loading = ref(false)
-const finished = ref(false)
 
 const delChat = (friendId) => {
     // 有computered 自动更新
@@ -81,15 +76,14 @@ const onSelect = (action) => {
             </div>
         </div>
 
-        <van-list v-model:loading="loading" :finished="finished" finished-text="没有更多了" @load="onLoad"
-            v-if="displayList.length">
-            <van-cell-group inset>
+        <van-list v-if="displayList.length">
+            <van-cell-group>
                 <van-swipe-cell v-for="item in displayList" :key="item.from_user_id">
-                    <van-cell v-if="item.type === 'CHAT'" @click="router.push({
+                    <van-cell v-if="item.type === 'private_message'" @click="router.push({
                         path: '/chat',
                         query: {
                             userId: item.from_user_id,
-                            nickname: item.nickname,
+                            nickname: item.from_user_nickname,
                             avatarUrl: encodeURIComponent(item.from_user_avatar)
                         }
                     })">
@@ -97,18 +91,18 @@ const onSelect = (action) => {
                             <div class="avatar-nickname">
                                 <img class="custom-image" :src="item.from_user_avatar || defaultAvatar" />
                                 <div class="text">
-                                    <p class="custom-title">{{ item.nickname || '匿名用户' }}</p>
+                                    <p class="custom-title">{{ item.from_user_nickname || '匿名用户' }}</p>
                                     <p class="custom-last-chat">{{ item.content }}</p>
                                 </div>
                             </div>
                         </template>
-                        <template #right-icon>
+                        <!-- <template #right-icon>
                             <div class="un-read" v-if="item.status === 'UNREAD'">
                                 {{ item.count }}
                             </div>
-                        </template>
+                        </template> -->
                     </van-cell>
-                    <van-cell v-else-if="item.type === 'SYSTEM'" @click="router.push('/notice/SYSTEM')">
+                    <van-cell v-else-if="item.notification_type === 'SYSTEM'" @click="router.push('/notice/SYSTEM')">
                         <template #title>
                             <div class="sys">
                                 <van-icon name="setting" class="system-icon" />
@@ -126,7 +120,8 @@ const onSelect = (action) => {
                         </template>
                     </van-cell>
 
-                    <van-cell v-else-if="item.type === 'INTERACTION'" @click="router.push('/notice/INTERACTION')">
+                    <van-cell v-else-if="item.notification_type === 'INTERACTION'"
+                        @click="router.push('/notice/INTERACTION')">
                         <template #title>
                             <div class="interaction">
                                 <van-icon name="bell" class="interaction-icon" />
@@ -145,7 +140,7 @@ const onSelect = (action) => {
                     </van-cell>
                     <template #right>
                         <van-button square text="已读" color="#c4c0c0" class="read-button" @click="read(item.id)"
-                            v-if="item.status === 'UNREAD' && item.type === 'CHAT'" />
+                            v-if="item.status === 'UNREAD' && item.type === 'private_message'" />
                         <van-button square text="删除" type="danger" class="delete-button"
                             :class="{ 'delete-button-full': item.status === 'READ' }" @click="delChat(item.friendId)" />
                     </template>
@@ -283,6 +278,9 @@ const onSelect = (action) => {
 
 .avatar-nickname {
 
+    display: flex;
+    align-items: center;
+
     .custom-image {
         width: 40px;
         height: 40px;
@@ -345,11 +343,9 @@ const onSelect = (action) => {
     }
 }
 
-.avatar-nickname,
 .user-info {
     display: flex;
     align-items: center;
-    margin-top: 10px;
 }
 
 .read-button,

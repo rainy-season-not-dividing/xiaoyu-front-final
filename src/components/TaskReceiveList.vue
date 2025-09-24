@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { timeAgo } from '@/utils/timeFormat'
 import { transVisibility, transStatus, transFontColor, transBackGroundColor } from '@/utils/translate'
 import { getMyReceiveTaskList } from '@/api/task'
-import {cancelTaskOrder,finishTaskOrder} from '@/api/task'
+import { cancelTaskOrder, finishTaskOrder } from '@/api/task'
 
 
 
@@ -35,14 +35,15 @@ const fetchTaskList = async () => {
       page: currentPage.value,
       size: pageSize.value
     })
-    
-    if (refreshing.value) {
+
+    if (currentPage.value === 1) {
       form.value = data.list
       refreshing.value = false
     } else {
       form.value = [...form.value, ...data.list]
     }
-    
+    ++currentPage.value
+    loading.value = false
     // 判断是否还有更多数据
     if (form.value.length >= data.pagination.total) {
       finished.value = true
@@ -52,15 +53,21 @@ const fetchTaskList = async () => {
     finished.value = true
   } finally {
     loading.value = false
+    refreshing.value = false  // 添加这一行
   }
 }
 
 // 加载更多
-const onLoad = () => {
-  if (refreshing.value) return
-  
-  currentPage.value++
-  fetchTaskList()
+const onLoad = async () => {
+  if (refreshing.value) {
+    refreshing.value = false
+    currentPage.value = 1
+  }
+
+  if (finished.value) {
+    console.log('加载更多外面')
+    await fetchTaskList()
+  }
 }
 
 // 下拉刷新
@@ -78,20 +85,19 @@ onMounted(() => {
 
 const goDetail = (id) => {
   console.log("准备进入任务详情页")
-  router.push(`/posts/task?id=${id}`);
+  router.push(`/task/detail/${id}`);
+  //router.push(`/task/publish/${id}`);
 }
 
-const finish =async (id, event) => {
+const finish = async (id, event) => {
   // 处理完成任务逻辑
   console.log('完成任务:', id)
   await finishTaskOrder(id);
-  event.stopPropagation()
 }
-const cancel =async (id, event) => {
+const cancel = async (id, event) => {
   // 处理取消任务逻辑
   console.log('取消任务:', id)
   await cancelTaskOrder(id);
-  event.stopPropagation()
 }
 
 
@@ -101,12 +107,7 @@ const cancel =async (id, event) => {
   <div class="main">
     <van-tab title="我接收的">
       <van-pull-refresh v-model="refreshing" @refresh="onRefresh">
-        <van-list
-          v-model:loading="loading"
-          :finished="finished"
-          finished-text="没有更多了"
-          @load="onLoad"
-        >
+        <van-list v-model:loading="loading" :finished="finished" finished-text="没有更多了" @load="onLoad">
           <div class="article" v-for="item in form" :key="item.id" @click="goDetail(item.id)">
             <div class="message-show">
               <img :src="item.publisher.avatarUrl" alt="头像" class="profile">
@@ -133,7 +134,7 @@ const cancel =async (id, event) => {
               }">
                 {{ transStatus(item.status) }}
               </div>
-              
+
               <div class="tag" :style="{
                 color: 'rgb(' + transFontColor(item.visibility) + ')',
                 backgroundColor: 'rgb(' + transBackGroundColor(item.visibility) + ')'
@@ -150,11 +151,12 @@ const cancel =async (id, event) => {
             </div>
 
             <div class="actions" :style="{ opacity: isManaging ? 1 : 0 }">
-                        <!-- <button class="" @click.stop="deleteArticle(item.id,$event)">评价任务</button> -->
-                        <!-- 只有进行中显示完成任务按钮 -->
-                        <button class="btn" v-show="item.status==='RUNNING'"  @click.stop="finish(item.id,$event)">完成任务</button>
-                        <!-- 只有进行中和审核中显示取消任务按钮 -->
-                        <button class="btn" v-show="item.status==='RUNNING'||item.status==='AUDITING'"  @click.stop="cancel(item.id,$event)">取消任务</button>
+              <!-- <button class="" @click.stop="deleteArticle(item.id,$event)">评价任务</button> -->
+              <!-- 只有进行中显示完成任务按钮 -->
+              <button class="btn" v-show="item.status === 'RUNNING'" @click.stop="finish(item.id, $event)">完成任务</button>
+              <!-- 只有进行中和审核中显示取消任务按钮 -->
+              <button class="btn" v-show="item.status === 'RUNNING' || item.status === 'AUDITING'"
+                @click.stop="cancel(item.id, $event)">取消任务</button>
             </div>
           </div>
 
@@ -169,64 +171,68 @@ const cancel =async (id, event) => {
 </template>
 
 <style scoped>
-.btn
-{
+.btn {
   border-radius: 10px;
   width: 50px;
   height: 40px;
   font-size: 10px;
-  border:2px;
+  border: 2px;
   margin-right: 20px;
   text-align: center;
 }
-.btn
-{
 
-        border:none;
-        padding: 8px 14px; /* 按钮内边距 */
-        z-index: 1;
-        /* 移除按钮自身的绝对定位，让它们受 .actions 容器管理 */
-        /* position: absolute;  <-- 已删除 */
-        /* z-index: 50;        <-- 已删除 */
-        
-        background: rgba(255, 255, 255, 0.5); /* 稍微提高背景不透明度，效果更好 */
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        color: rgba(50,50,50,0.8);
-        cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 
-        0 4px 15px rgba(0, 0, 0, 0.15),
-        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+.btn {
+
+  border: none;
+  padding: 8px 14px;
+  /* 按钮内边距 */
+  z-index: 1;
+  /* 移除按钮自身的绝对定位，让它们受 .actions 容器管理 */
+  /* position: absolute;  <-- 已删除 */
+  /* z-index: 50;        <-- 已删除 */
+
+  background: rgba(255, 255, 255, 0.5);
+  /* 稍微提高背景不透明度，效果更好 */
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: rgba(50, 50, 50, 0.8);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow:
+    0 4px 15px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
-.btn:hover
-{
-      transform: translateY(-15%); /* 鼠标悬浮时轻微上浮 */
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
-      background-color: rgba(89, 241, 109,0.5);
+
+.btn:hover {
+  transform: translateY(-15%);
+  /* 鼠标悬浮时轻微上浮 */
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  background-color: rgba(89, 241, 109, 0.5);
 }
- .actions
-    {
-      
-      /* 1. 使用绝对定位，使其脱离文档流 */
-      position: absolute;
-      /* 2. 将其定位在 .article 的右上角 */
-      top: 50%;
-      right: 20px;
-      transform: translateY(-50%); /* 垂直居中对齐 */
-      /* 3. 使用 flex 布局让按钮垂直排列 */
-      display: flex;
-      flex-direction: column;
-      gap: 10%; /* 按钮之间的间距 */
-      transition: all .3s;
-      
-      opacity: 1;
-      opacity: 0;
-      width:50%;
-      height:100%;
-      justify-content: center;
-      align-items:end;
-    }
+
+.actions {
+
+  /* 1. 使用绝对定位，使其脱离文档流 */
+  position: absolute;
+  /* 2. 将其定位在 .article 的右上角 */
+  top: 50%;
+  right: 20px;
+  transform: translateY(-50%);
+  /* 垂直居中对齐 */
+  /* 3. 使用 flex 布局让按钮垂直排列 */
+  display: flex;
+  flex-direction: column;
+  gap: 10%;
+  /* 按钮之间的间距 */
+  transition: all .3s;
+
+  opacity: 1;
+  opacity: 0;
+  width: 50%;
+  height: 100%;
+  justify-content: center;
+  align-items: end;
+}
 
 .title {
   display: flex;
@@ -253,13 +259,13 @@ const cancel =async (id, event) => {
 }
 
 .content {
-  font-size: 10px;
+  font-size: 15px;
 }
 
 .tag-bottom {
   padding: 4px 2px;
   border-radius: 1px;
-  font-size: 6px;
+  font-size: 12px;
   color: rgb(73, 73, 73)
 }
 
@@ -317,7 +323,8 @@ const cancel =async (id, event) => {
   opacity: 0.9;
 }
 
-.tag-show, .engage-show {
+.tag-show,
+.engage-show {
   display: flex;
   flex-wrap: wrap;
   gap: 3%;
@@ -337,7 +344,7 @@ const cancel =async (id, event) => {
   padding: 1px 2px;
   background-color: rgb(225, 224, 224);
   border-radius: 3px;
-  font-size: 5px;
+  font-size: 10px;
   color: rgb(73, 73, 73)
 }
 </style>
