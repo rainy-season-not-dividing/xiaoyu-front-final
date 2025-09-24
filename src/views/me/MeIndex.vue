@@ -22,6 +22,7 @@ onMounted(async () => {
 const Logout = async () => {
     await logout()
     userStore.setToken('')
+    userStore.setUserInfo({})
     await router.push('/login')
     showSuccessToast('退出成功')
 }

@@ -26,10 +26,27 @@ app.use(Notify)
 const userStore = useUserStore()
 userStore.initTokenCleanup()
 
-// 全局只连一次
-useSocketStore().connect()
+// 初始化WebSocket store，但不立即连接
+const socketStore = useSocketStore()
 
-const { latest } = storeToRefs(useSocketStore())
+// 监听用户token变化，有token时自动连接WebSocket
+watch(() => userStore.token, (newToken) => {
+    if (newToken) {
+        // 有token时连接WebSocket
+        socketStore.setToken(newToken)
+        socketStore.connect()
+    } else {
+        // 没有token时断开连接
+        socketStore.disconnect()
+    }
+}, { immediate: true })
+
+const { latest } = storeToRefs(socketStore)
+
+// 应用关闭时清理资源
+window.addEventListener('beforeunload', () => {
+    socketStore.cleanup()
+})
 
 /* 只要来新消息就弹窗（列表已在 Store 自动追加） */
 watch(latest, (msg) => {
@@ -45,16 +62,14 @@ watch(latest, (msg) => {
             } */
 
     if (!msg) return
+
+    // 构建通知文本内容
+    const notificationText = `${msg.from_user_nickname || '系统'}: ${msg.content || '新消息'}`
+
     showNotify({
         type: 'primary',
         duration: 3000,
-        message: h('div', { style: 'display:flex;align-items:center;' }, [
-            h(MessageDialogAvatar, { type: msg.type, avatarUrl: msg.from_user_avatar }),
-            h('div', {}, [
-                h('div', { style: 'font-weight:bold;' }, msg.from_user_nickname),
-                h('div', { style: 'font-size:12px;color:#666;' }, msg.content)
-            ])
-        ])
+        message: notificationText
     })
 }
 )
