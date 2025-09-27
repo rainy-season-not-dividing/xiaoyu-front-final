@@ -132,6 +132,7 @@ const onSearch = async () => {
 <style lang="less" scoped>
 .list {
     height: 100vh;
+    overflow-y: auto;
 
     .item {
         margin-top: 7px;

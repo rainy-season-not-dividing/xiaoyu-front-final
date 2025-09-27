@@ -9,19 +9,14 @@ import router from './router'
 import { watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useSocketStore, useUserStore } from '@/stores'
-import { showNotify, Notify } from 'vant'
-import 'vant/es/notify/style'
 import keyboardDirective from './directives/keyboard'
 import '@/assets/css/my-icon/iconfont.css'
-import { useRoute } from 'vue-router'
-
-const route = useRoute()
+import { showMessage } from '@/utils/message'
 
 const app = createApp(App)
 
 app.use(pinia)
 app.use(router)
-app.use(Notify)
 
 // 初始化用户 store 的 token 清理功能
 const userStore = useUserStore()
@@ -31,51 +26,64 @@ userStore.initTokenCleanup()
 const socketStore = useSocketStore()
 
 // 监听用户token变化，有token时自动连接WebSocket
-watch(() => userStore.token, (newToken) => {
-    if (newToken) {
-        // 有token时连接WebSocket
-        socketStore.setToken(newToken)
-        socketStore.connect()
-    } else {
-        // 没有token时断开连接
-        socketStore.disconnect()
-    }
-}, { immediate: true })
+watch(
+    () => userStore.token,
+    (newToken) => {
+        if (newToken) {
+            // 有token时连接WebSocket
+            socketStore.setToken(newToken)
+            socketStore.connect()
+        } else {
+            // 没有token时断开连接
+            socketStore.disconnect()
+        }
+    },
+    { immediate: true },
+)
 
 const { latest } = storeToRefs(socketStore)
 
-// 应用关闭时清理资源
-window.addEventListener('beforeunload', () => {
-    socketStore.cleanup()
-})
+router.isReady().then(() => {
+    /* 只要来新消息就弹窗（列表已在 Store 自动追加） */
+    watch(latest, (msg) => {
+        /* payload: {
+                      "type": "CHAT INTERACTION SYSTEM",
+                      "message_id": 789,
+                      "from_user_id": 123,
+                      "from_user_nickname": "张三",
+                      "from_user_avatar": "https://oss.example.com/avatar/123.jpg",
+                      "content": "你好！这是一条私信",
+                      "created_at": "2024-01-01 12:00:00",
+                      "timestamp": 1640995200000
+                  } */
 
-/* 只要来新消息就弹窗（列表已在 Store 自动追加） */
-watch(latest, (msg) => {
-    /* payload: {
-                "type": "CHAT INTERACTION SYSTEM",
-                "message_id": 789,
-                "from_user_id": 123,
-                "from_user_nickname": "张三",
-                "from_user_avatar": "https://oss.example.com/avatar/123.jpg",
-                "content": "你好！这是一条私信",
-                "created_at": "2024-01-01 12:00:00",
-                "timestamp": 1640995200000
-            } */
+        // 使用 router.currentRoute.value 获取当前路由信息
+        const currentRoute = router.currentRoute.value
+        // 安全地检查路由信息
+        const routePath = currentRoute.path || ''
+        const routeUserId = currentRoute.query.userId || ''
 
-    if (!msg) return
-
-    // 构建通知文本内容
-    const notificationText = `${msg.from_user_nickname || '系统'}: ${msg.content || '新消息'}`
-
-    showNotify({
-        type: 'primary',
-        duration: 3000,
-        message: notificationText
+        if (msg && (routePath !== '/chat' || parseInt(routeUserId) !== msg.from_user_id)) {
+            showMessage({
+                avatarUrl: msg.from_user_avatar,
+                nickname: msg.from_user_nickname,
+                message: msg.content,
+                onClick: () => {
+                    router.push({
+                        path: '/chat',
+                        query: {
+                            userId: msg.from_user_id,
+                            nickname: msg.from_user_nickname,
+                            avatarUrl: encodeURIComponent(msg.from_user_avatar),
+                        }
+                    })
+                    latest.value.status = 'READ'
+                    latest.value.cnt = 0
+                }
+            })
+        }
     })
-
-
-}
-)
+})
 
 // 注册全局自定义指令
 app.directive('keyboard', keyboardDirective)

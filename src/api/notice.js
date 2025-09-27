@@ -15,8 +15,3 @@ export const getNoticeList = (type, page, size) => {
 export const readNotice = (notification_id) => {
     return request.put(`/api/notifications/${notification_id}/read`)
 }
-
-// 获取通知总数
-export const getNoticeCount = () => {
-    return request.get('/api/notifications/unread_count')
-}

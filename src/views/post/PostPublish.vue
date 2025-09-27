@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { publishPost, getPostDetail, updatePost, getAllTopic } from '@/api/posts'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores'
@@ -30,7 +30,7 @@ const topicList = ref([])
 
 onMounted(async () => {
     const { data: { data } } = await getAllTopic()
-    topicList.value = data.list
+    topicList.value = data
 })
 
 onMounted(async () => {
@@ -237,7 +237,7 @@ const handlePrivacy = (val) => {
                     </div>
                 </div>
 
-                <div class="title">
+                <div class="title" @click="">
                     <div class="icon">
                         <van-icon class-prefix="my-icon" name="hashjinghao" />
                     </div>
@@ -452,7 +452,6 @@ const handlePrivacy = (val) => {
         font-size: 14px;
         color: #9da3af;
     }
-}
 }
 
 .selected {

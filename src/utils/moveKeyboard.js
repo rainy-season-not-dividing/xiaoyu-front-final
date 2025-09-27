@@ -5,7 +5,7 @@ export const handleInputFocus = (commentInput) => {
         commentInput.value.focus()
 
         // 将输入框往上顶
-        scrollToInput()
+        scrollToInput(commentInput)
     }
 }
 

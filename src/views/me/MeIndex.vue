@@ -3,7 +3,7 @@ import { ref, onMounted } from 'vue'
 import defaultAvatar from "@/assets/image/default.png"
 import { useRouter } from 'vue-router';
 import { getUserInfo, logout } from '@/api/user'
-import { useUserStore } from '@/stores';
+import { useUserStore, useSocketStore } from '@/stores';
 
 const router = useRouter()
 
@@ -11,6 +11,8 @@ const router = useRouter()
 const formModel = ref({})
 
 const userStore = useUserStore()
+
+const socketStore = useSocketStore()
 
 onMounted(async () => {
     const { data: { data } } = await getUserInfo()
@@ -21,8 +23,11 @@ onMounted(async () => {
 
 const Logout = async () => {
     await logout()
-    userStore.setToken('')
-    userStore.setUserInfo({})
+
+    userStore.clear()
+
+    socketStore.cleanup()
+
     await router.push('/login')
     showSuccessToast('退出成功')
 }
@@ -132,7 +137,7 @@ const Logout = async () => {
             background-color: #84b0ed;
             margin-bottom: 10px;
 
-            .avatar{
+            .avatar {
                 width: 50px;
                 height: 50px;
                 border-radius: 50%;

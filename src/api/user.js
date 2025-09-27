@@ -57,7 +57,7 @@ export const getUserDetail = (user_id) => {
 
 // 查询用户
 export const searchUser = (keyword, page, size) => {
-    return request.get('/api/users/search', {
+    return request.get('/api/search/users', {
         params: {
             keyword,
             page,

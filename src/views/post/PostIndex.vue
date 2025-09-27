@@ -4,9 +4,6 @@ import { getAllPost, likePost, cancelLikePost, collectPost, cancelCollectPost, s
 import { ref, onMounted } from "vue"
 import defaultAvatar from "@/assets/image/default.png"
 import { timeAgo } from "@/utils/timeFormat"
-import { useUserStore } from '@/stores'
-
-const userStore = useUserStore()
 
 const router = useRouter()
 

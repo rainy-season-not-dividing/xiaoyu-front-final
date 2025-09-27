@@ -51,6 +51,20 @@ const onSelect = (action) => {
         router.push(action.path)
     }
 }
+
+const goChat = (friendId, nickname, avatarUrl) => {
+    router.push({
+        path: '/chat',
+        query: {
+            userId: friendId,
+            nickname,
+            avatarUrl: encodeURIComponent(avatarUrl)
+        }
+    })
+    const chat = chatMap.value.get(friendId)
+    chat.status = 'READ'
+    chat.cnt = 0
+}
 </script>
 
 <template>
@@ -79,14 +93,8 @@ const onSelect = (action) => {
         <van-list v-if="displayList.length">
             <van-cell-group>
                 <van-swipe-cell v-for="item in displayList" :key="item.from_user_id">
-                    <van-cell v-if="item.type === 'private_message'" @click="router.push({
-                        path: '/chat',
-                        query: {
-                            userId: item.from_user_id,
-                            nickname: item.from_user_nickname,
-                            avatarUrl: encodeURIComponent(item.from_user_avatar)
-                        }
-                    })">
+                    <van-cell v-if="item.type === 'private_message'"
+                        @click="goChat(item.from_user_id, item.from_user_nickname, item.from_user_avatar)">
                         <template #title>
                             <div class="avatar-nickname">
                                 <img class="custom-image" :src="item.from_user_avatar || defaultAvatar" />
@@ -96,11 +104,11 @@ const onSelect = (action) => {
                                 </div>
                             </div>
                         </template>
-                        <!-- <template #right-icon>
+                        <template #right-icon>
                             <div class="un-read" v-if="item.status === 'UNREAD'">
-                                {{ item.count }}
+                                {{ item.cnt }}
                             </div>
-                        </template> -->
+                        </template>
                     </van-cell>
                     <van-cell v-else-if="item.notification_type === 'SYSTEM'" @click="router.push('/notice/SYSTEM')">
                         <template #title>

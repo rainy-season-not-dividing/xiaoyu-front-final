@@ -16,8 +16,8 @@ export const useUserStore = defineStore('user', () => {
     // 定时器引用
     const tokenCleanupTimer = ref(null)
 
-    // 清除 token
-    const clearToken = () => {
+    // 清除 token userInfo 及定时器
+    const clear = () => {
         token.value = ''
         userInfo.value = {}
 
@@ -79,7 +79,7 @@ export const useUserStore = defineStore('user', () => {
         }
     }
 
-    return { token, setToken, userInfo, setUserInfo,clearToken,initTokenCleanup }
+    return { token, setToken, userInfo, setUserInfo,clear,initTokenCleanup }
 }, {
     persist: [
         {

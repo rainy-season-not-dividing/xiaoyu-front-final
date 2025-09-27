@@ -2,7 +2,7 @@
 import { getPostDetail, getCommentList, likePost, cancelLikePost, collectPost, cancelCollectPost, sharePost, likeComment, cancelLikeComment, publishComment, deleteComment } from "@/api/posts";
 import { getFriendsList } from "@/api/friends"
 import { ref, onMounted } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import defaultAvatar from "@/assets/image/default.png"
 import { timeAgo } from "@/utils/timeFormat"
 import { useUserStore } from '@/stores'
@@ -11,6 +11,7 @@ import { handleInputFocus, handleInputBlur, scrollToInput } from '@/utils/moveKe
 const userStore = useUserStore()
 
 const route = useRoute()
+const router = useRouter()
 
 const postId = route.params.id
 
@@ -132,17 +133,29 @@ const share = async () => {
 const findCommentById = (commentId) => {
     return commentList.value.find(comment => comment.id === commentId)
 }
-const likeComments = async (commentId, isLiked) => {
-    const comment = findCommentById(commentId)
+
+// 找二级
+const findSecondCommentById = (parentId, commentId) => {
+    const comment = commentList.value.find(comment => comment.id === parentId)
+    return comment.replies.find(reply => reply.id === commentId)
+}
+const likeComments = async (commentId, isLiked, type, parentId) => {
+    let comment
+    if (type === 'first') {
+        comment = findCommentById(commentId)
+    } else {
+        comment = findSecondCommentById(parentId, commentId)
+    }
     if (isLiked) {
         const { data: { data } } = await cancelLikeComment(commentId)
         comment.isLiked = false
-        comment.likeCnt = data.likeCnt
+        comment.likeCnt = data.like_cnt
     } else {
         const { data: { data } } = await likeComment(commentId)
         comment.isLiked = true
-        comment.likeCnt = data.likeCnt
+        comment.likeCnt = data.like_cnt
     }
+
 }
 
 const atFlag = ref(false)
@@ -195,7 +208,7 @@ const secondComment = (parentId) => {
         commentInput.value.focus()
 
         // 将输入框往上顶
-        scrollToInput()
+        scrollToInput(commentInput)
     }
 }
 
@@ -211,7 +224,9 @@ const publish = async () => {
             parentId: currentReplyTo.value,
             atUsers: atUsers.value
         })
-        commentList.value.replies.push(data)
+        const { data: { data } } = await getCommentList(route.params.id, { page: 1, size: commentSize.value })
+
+        commentList.value = data.list
     } else {
         // 一级评论
         await publishComment(postId, {
@@ -225,19 +240,25 @@ const publish = async () => {
         commentList.value = data.list
     }
     commentContent.value = ''
+    currentReplyTo.value = null
     atUsers.value = []
     atFlag.value = false
 }
 
-const deleteUserComment = async (commentId) => {
-    await deleteComment(commentId)
-    commentList.value.splice(commentList.value.findIndex(comment => comment.id === commentId), 1)
+const deleteUserComment = async (commentId, type, parentId) => {
+    if (type === 'first') {
+        await deleteComment(commentId)
+        commentList.value.splice(commentList.value.findIndex(comment => comment.id === commentId), 1)
+    } else {
+        await deleteComment(commentId)
+        const parentComment = findCommentById(parentId)
+        parentComment.replies.splice(parentComment.replies.findIndex(reply => reply.id === commentId), 1)
+    }
 }
-
 </script>
 
 <template>
-    <van-nav-bar title="帖子详情" left-arrow @click-left="$router.back()" fixed />
+    <van-nav-bar title="帖子详情" left-arrow @click-left="router.back()" fixed />
 
     <van-pull-refresh v-model="refreshing" @refresh="onRefresh">
         <div class="post">
@@ -292,7 +313,7 @@ const deleteUserComment = async (commentId) => {
                     <div class="like-comment">
                         <div class="likes" @click="like()">
                             <div class="text">
-                                <van-icon name="good-job" v-if="post?.userActions?.isLiked" />
+                                <van-icon name="good-job" v-if="post?.userActions?.isLiked" color="#fb523f" />
                                 <van-icon name="good-job-o" v-else />
                                 <span class="likes-text" v-if="post?.stats?.likeCnt">{{ post.stats.likeCnt }}</span>
                             </div>
@@ -309,8 +330,8 @@ const deleteUserComment = async (commentId) => {
 
                     <div class="collection-share">
                         <div class="collection" @click="collect()">
-                            <van-icon name="bookmark-o" v-if="!post?.userActions?.isFavorited" />
-                            <van-icon name="bookmark" v-else />
+                            <van-icon name="bookmark" v-if="post?.userActions?.isFavorited" color="#fbc31d" />
+                            <van-icon name="bookmark-o" v-else />
                         </div>
 
                         <div class="share" @click="share()">
@@ -346,11 +367,11 @@ const deleteUserComment = async (commentId) => {
 
                 <div class="publish">
                     <div class="avatar">
-                        <img :src="userStore.userInfo.avatarUrl || defaultAvatar" class="avatar-image" />
+                        <img :src="userStore.userInfo.avatar || defaultAvatar" class="avatar-image" />
                     </div>
-                    <div class="publish-container" ref="commentInput">
+                    <div class="publish-container" ref="commentInput" v-keyboard>
                         <div class="publish-input">
-                            <textarea v-model="commentContent" placeholder="善于结善缘，恶言伤人心" v-keyboard
+                            <textarea v-model="commentContent" placeholder="善于结善缘，恶言伤人心"
                                 @focus="handleInputFocus(commentInput)" @blur="handleInputBlur"></textarea>
                         </div>
                         <div class="publish-at">
@@ -376,8 +397,9 @@ const deleteUserComment = async (commentId) => {
                         <div class="comment-content">
                             {{ comment.content }}
                             <div v-if="comment.atUsers.length">
-                                @
-                                <span v-for="user in comment.atUsers" :key="user.id" class="comment-at-user">
+                                <span class="at">@</span>
+                                <span v-for="user in comment.atUsers" :key="user.id" class="comment-at-user"
+                                    @click="router.push(`/user/${user.id}`)">
                                     {{ user.nickname }}&nbsp;
                                 </span>
                             </div>
@@ -389,15 +411,16 @@ const deleteUserComment = async (commentId) => {
                             </div>
 
                             <div class="actions">
-                                <div class="comment-user" @click="secondComment(comment.user.id)">
+                                <div class="comment-user" @click="secondComment(comment.id)">
                                     评论
                                 </div>
                                 <div class="delete-comment" v-if="comment?.user.id === userStore.userInfo.id">
-                                    <van-icon name="delete-o" @click="deleteUserComment(comment.id)" />
+                                    <van-icon name="delete-o" @click="deleteUserComment(comment.id, 'first', null)" />
                                 </div>
 
-                                <div class="comment-like" @click="likeComments(comment.id, comment.isLiked)">
-                                    <van-icon name="good-job" v-if="comment.isLiked" />
+                                <div class="comment-like"
+                                    @click="likeComments(comment.id, comment.isLiked, 'first', null)">
+                                    <van-icon name="good-job" v-if="comment.isLiked" color="#fb523f" />
                                     <van-icon name="good-job-o" v-else />
                                     <span class="text" v-if="comment.likeCnt">
                                         {{ comment.likeCnt }}
@@ -406,7 +429,7 @@ const deleteUserComment = async (commentId) => {
                             </div>
                         </div>
 
-                        <div class="second-comment" v-if="comment.replies">
+                        <div class="second-comment" v-if="comment.replies.length">
                             <div class="second-comment-line" v-for="reply in comment.replies" :key="reply.id">
                                 <div class="comment-user">
                                     <img round :src="reply.user.avatarUrl || defaultAvatar" class="comment-avatar" />
@@ -415,9 +438,11 @@ const deleteUserComment = async (commentId) => {
                                 </div>
 
                                 <div class="comment-content">
-                                    {{ reply.content }} @
-                                    <div v-if="reply.atUsers">
-                                        <span v-for="user in reply.atUsers" :key="user.id" class="comment-at-user">
+                                    {{ reply.content }}
+                                    <div v-if="reply.atUsers.length">
+                                        @
+                                        <span v-for="user in reply.atUsers" :key="user.id" class="comment-at-user"
+                                            @click="router.push(`/user/${user.id}`)">
                                             {{ user.nickname }}&nbsp;
                                         </span>
                                     </div>
@@ -431,12 +456,12 @@ const deleteUserComment = async (commentId) => {
                                     <div class="actions">
                                         <div class="delete-comment" v-if="reply.user.id === userStore.userInfo.id">
                                             <van-icon name="delete-o"
-                                                @click="deleteUserComment(comment.id, reply.id)"></van-icon>
+                                                @click="deleteUserComment(reply.id, 'second', comment.id)"></van-icon>
                                         </div>
 
                                         <div class="comment-like"
-                                            @click="likeComments(comment.id, reply.id, reply.isLiked)">
-                                            <van-icon name="good-job" v-if="reply.isLiked" />
+                                            @click="likeComments(reply.id, reply.isLiked, 'second', comment.id)">
+                                            <van-icon name="good-job" v-if="reply.isLiked" color="#fb523f" />
                                             <van-icon name="good-job-o" v-else />
                                             <span class="text" v-if="reply.likeCnt">
                                                 {{ reply.likeCnt }}
@@ -458,6 +483,11 @@ const deleteUserComment = async (commentId) => {
 </template>
 
 <style lang="less" scoped>
+.at,
+.comment-at-user {
+    color: #409EFF;
+}
+
 :deep(.van-list) {
     height: 100vh;
 }
@@ -654,6 +684,8 @@ const deleteUserComment = async (commentId) => {
 .comments {
     margin-top: 10px;
     background-color: white;
+    height: 100vh;
+    overflow-y: auto;
 }
 
 .comment-header {
@@ -724,6 +756,13 @@ const deleteUserComment = async (commentId) => {
             margin-top: 5px;
             margin-right: 10px;
         }
+
+        .delete-comment,
+        .comment-like {
+            margin-top: 3px;
+            margin-right: 10px;
+            font-size: 16px;
+        }
     }
 }
 
@@ -735,6 +774,18 @@ const deleteUserComment = async (commentId) => {
         justify-content: space-between;
         align-items: center;
         margin-bottom: 10px;
+
+        .actions {
+            display: flex;
+            align-items: center;
+            font-size: 12px;
+
+            .delete-comment,
+            .comment-like {
+                margin-right: 10px;
+                font-size: 16px;
+            }
+        }
     }
 }
 

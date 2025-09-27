@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, watch, nextTick } from 'vue'
+import { onMounted, ref, watch, nextTick, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import defaultAvatar from '@/assets/image/default.png'
 import { getChatRecord } from '@/api/friends'
@@ -22,6 +22,8 @@ const chatRecord = ref([])
 const page = ref(1)
 const size = ref(20)
 
+const showNew = ref(false)
+
 // 聊天回调函数
 const handleNewMessage = (message) => {
     // 只处理来自当前聊天对象的消息
@@ -32,10 +34,62 @@ const handleNewMessage = (message) => {
             "content": message.content,
             "createdAt": message.created_at
         })
+        if (!isScrolledToBottom()) {
+            showNew.value = true
+        } else {
+            setTimeout(() => {
+                scrollToBottom()
+            }, 50)
+        }
     }
 }
 
-const chatContainer = ref(null)
+// 改进的判断是否在底部的函数
+const isScrolledToBottom = () => {
+    // 尝试多个可能的滚动容器
+    const containers = [
+        document.querySelector('.container'),
+        document.querySelector('.van-pull-refresh__track'),
+        document.querySelector('.van-pull-refresh'),
+        document.documentElement,
+        document.body
+    ]
+
+    for (let container of containers) {
+        if (container) {
+            // 对于不同的容器类型使用不同的属性
+            let scrollTop, scrollHeight, clientHeight
+
+            if (container === document.documentElement || container === document.body) {
+                // document 或 body 的滚动
+                scrollTop = window.pageYOffset || document.documentElement.scrollTop
+                scrollHeight = Math.max(
+                    document.body.scrollHeight,
+                    document.documentElement.scrollHeight,
+                    document.body.offsetHeight,
+                    document.documentElement.offsetHeight,
+                    document.body.clientHeight,
+                    document.documentElement.clientHeight
+                )
+                clientHeight = window.innerHeight || document.documentElement.clientHeight
+            } else {
+                // 普通元素的滚动
+                scrollTop = container.scrollTop
+                scrollHeight = container.scrollHeight
+                clientHeight = container.clientHeight
+            }
+
+            // 检查是否在底部（允许30px误差）
+            if (scrollHeight > clientHeight) { // 确保有滚动条
+                const isAtBottom = scrollTop + clientHeight >= scrollHeight - 30
+                return isAtBottom
+            }
+        }
+    }
+
+    // 默认返回 true（假设在底部）
+    return true
+}
 
 // 修改 scrollToBottom 函数 - 使用更精确的选择器和多重尝试
 const scrollToBottom = () => {
@@ -75,18 +129,16 @@ onMounted(async () => {
     })
     chatRecord.value = data.list.slice().reverse()
 
-    // 额外延时确保完全加载
-    setTimeout(() => {
-        scrollToBottom()
-    }, 500)
+    nextTick(() => {
+        setTimeout(() => {
+            scrollToBottom()
+        }, 300)
+    })
 })
 
 const refreshing = ref(false)
 
 const onRefresh = async () => {
-    if (chatRecord.value.length >= data.pagination.total) {
-        return
-    }
 
     if (refreshing.value) {
         refreshing.value = false
@@ -97,6 +149,10 @@ const onRefresh = async () => {
         size: size.value,
         friendId: friendId
     })
+
+    if (chatRecord.value.length >= data.pagination.total) {
+        return
+    }
 
     const reversedList = data.list.slice().reverse()
 
@@ -129,6 +185,13 @@ const publish = async () => {
         scrollToBottom()
     }, 50)
 }
+
+const handleNew = () => {
+    setTimeout(() => {
+        scrollToBottom()
+    }, 50)
+    showNew.value = false
+}
 </script>
 
 <template>
@@ -153,7 +216,7 @@ const publish = async () => {
         </van-nav-bar>
 
         <van-pull-refresh v-model="refreshing" @refresh="onRefresh">
-            <div class="container" ref="chatContainer">
+            <div class="container">
                 <div class="item" v-for="item in chatRecord" :key="item.id"
                     :class="{ 'self': item.fromId === userStore.userInfo.id, 'other': item.fromId !== userStore.userInfo.id }">
                     <div class="avatar">
@@ -170,6 +233,10 @@ const publish = async () => {
             </div>
         </van-pull-refresh>
 
+        <div class="new-message" v-if="showNew" @click="handleNew">
+            新消息
+        </div>
+
         <div class="inp" v-keyboard ref="commentInput">
             <textarea v-model="content" @focus="handleInputFocus(commentInput)" @blur="handleInputBlur" />
             <div class="publish-button">
@@ -180,6 +247,21 @@ const publish = async () => {
 </template>
 
 <style lang="less" scoped>
+.new-message {
+    text-align: center;
+    position: fixed;
+    bottom: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 5px 10px;
+    border-radius: 15px;
+    background-color: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    font-size: 14px;
+    width: 70px;
+    height: 30px;
+}
+
 .chat {
 
     .inp {

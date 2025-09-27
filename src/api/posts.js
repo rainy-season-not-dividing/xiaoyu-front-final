@@ -27,7 +27,7 @@ export const likePost = (post_id) => {
 
 // 取消点赞动态
 export const cancelLikePost = (post_id) => {
-    return request.delete(`/api/posts/${post_id}`)
+    return request.delete(`/api/posts/${post_id}/like`)
 }
 
 // 收藏动态

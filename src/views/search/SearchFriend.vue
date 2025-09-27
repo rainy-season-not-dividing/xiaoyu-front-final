@@ -1,6 +1,6 @@
 <script setup>
 import { useRouter } from 'vue-router'
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { searchUser } from '@/api/user'
 import defaultAvatar from '@/assets/image/default.png'
 
@@ -11,6 +11,15 @@ const keyword = ref('')
 const userList = ref([])
 const page = ref(1)
 const size = ref(10)
+
+watch(() => keyword.value, async () => {
+    if (keyword.value.trim() === '') {
+        userList.value = []
+        page.value = 1
+        return
+    }
+})
+
 const onSearch = async () => {
     if (keyword.value.trim() === '') {
         showToast('用户名或昵称不能为空')
@@ -20,7 +29,8 @@ const onSearch = async () => {
     page.value = 1
 
     const { data: { data } } = await searchUser(keyword.value, page.value, size.value)
-    userList.value = data.list
+    const strangerList = data.list.filter(item => item.is_friend)
+    userList.value = strangerList
 }
 
 const loading = ref(false)
@@ -29,7 +39,10 @@ const refreshing = ref(false)
 
 const onLoad = async () => {
     if (keyword.value.trim() === '') {
+        userList.value = []
+        page.value = 1
         loading.value = false
+        refreshing.value = false
         finished.value = true
         return
     }
@@ -42,10 +55,12 @@ const onLoad = async () => {
 
     const { data: { data } } = await searchUser(keyword.value, page.value, size.value)
 
+    const strangerList = data.list.filter(item => item.is_friend)
+
     if (page.value === 1) {
-        userList.value = data.list
+        userList.value = strangerList
     } else {
-        userList.value.push(...data.list)
+        userList.value.push(...strangerList)
     }
 
     loading.value = false
@@ -58,6 +73,14 @@ const onLoad = async () => {
 }
 
 const onRefresh = () => {
+    if (keyword.value.trim() === '') {
+        userList.value = []
+        page.value = 1
+        loading.value = false
+        refreshing.value = false
+        finished.value = true
+        return
+    }
     // 清空列表数据
     finished.value = false
 
@@ -67,10 +90,16 @@ const onRefresh = () => {
     onLoad()
 }
 
+const onClear = () => {
+    userList.value = []
+    page.value = 1
+}
+
 </script>
 
 <template>
-    <van-search v-model="keyword" show-action placeholder="搜索好友" @search="onSearch" @cancel="router.back()" />
+    <van-search v-model="keyword" show-action placeholder="搜索好友" @keyup="onSearch" @clear="onClear"
+        @cancel="router.back()" />
 
     <van-pull-refresh v-model="refreshing" @refresh="onRefresh">
         <van-list v-model:loading="loading" :finished="finished" finished-text="没有更多了" @load="onLoad">
