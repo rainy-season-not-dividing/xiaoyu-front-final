@@ -139,18 +139,10 @@ const onSubmit = async () => {
 </template>
 
 <style lang="less" scoped>
-:deep(.van-uploader__upload) {
-    border-radius: 50%;
-    border: 1px dashed #ccc;
-    overflow: hidden;
+img {
     width: 60px;
     height: 60px;
-}
-
-:deep(.van-uploader__preview-image) {
     border-radius: 50%;
-    overflow: hidden;
-    width: 60px;
-    height: 60px;
+    object-fit: cover;
 }
 </style>

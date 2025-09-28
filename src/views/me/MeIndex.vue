@@ -129,29 +129,34 @@ const Logout = async () => {
         /* 为退出按钮留出空间 */
 
         .avatar-baseinfo {
+            margin-bottom: 10px;
             padding-top: 20px;
             width: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
             background-color: #84b0ed;
-            margin-bottom: 10px;
+            color: white;
 
             .avatar {
                 width: 50px;
                 height: 50px;
                 border-radius: 50%;
                 object-fit: cover;
-            }
-
-            div {
-                color: white;
-                font-size: 16px;
                 margin-bottom: 10px;
             }
 
+            .nickname {
+                font-size: 18px;
+            }
+
             .campus {
-                font-size: 14px;
+                font-size: 12px;
+            }
+
+            .edit {
+                margin-top: 10px;
+                margin-bottom: 20px;
             }
 
             :deep(.van-button) {

@@ -1,11 +1,12 @@
 <script setup>
-import { onMounted, ref, watch, nextTick, computed } from 'vue'
+import { onMounted, ref, nextTick, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import defaultAvatar from '@/assets/image/default.png'
 import { getChatRecord } from '@/api/friends'
 import { timeAgo } from '@/utils/timeFormat'
 import { useUserStore, useSocketStore } from '@/stores'
-import { handleInputFocus, handleInputBlur } from '@/utils/moveKeyboard'
+import { handleInputFocus, handleInputBlur, scrollToBottom, isScrolledToBottom } from '@/utils/move'
+import { storeToRefs } from 'pinia'
 
 const userStore = useUserStore()
 
@@ -17,6 +18,8 @@ const router = useRouter()
 const nickname = route.query.nickname
 const friendAvatarUrl = decodeURIComponent(route.query.avatarUrl || '')
 const friendId = route.query.userId
+
+const { chatMap } = storeToRefs(socketStore)
 
 const chatRecord = ref([])
 const page = ref(1)
@@ -34,88 +37,27 @@ const handleNewMessage = (message) => {
             "content": message.content,
             "createdAt": message.created_at
         })
-        if (!isScrolledToBottom()) {
+        if (!isScrolledToBottom([
+            document.querySelector('.container'),
+            document.querySelector('.van-pull-refresh__track'),
+            document.querySelector('.van-pull-refresh'),
+            document.documentElement,
+            document.body
+        ])) {
             showNew.value = true
+            setTimeout(() => {
+                showNew.value = false
+            }, 3000)
         } else {
             setTimeout(() => {
-                scrollToBottom()
+                scrollToBottom([
+                    '.van-pull-refresh__track',
+                    '.container',
+                    '.van-pull-refresh'
+                ])
             }, 50)
         }
     }
-}
-
-// 改进的判断是否在底部的函数
-const isScrolledToBottom = () => {
-    // 尝试多个可能的滚动容器
-    const containers = [
-        document.querySelector('.container'),
-        document.querySelector('.van-pull-refresh__track'),
-        document.querySelector('.van-pull-refresh'),
-        document.documentElement,
-        document.body
-    ]
-
-    for (let container of containers) {
-        if (container) {
-            // 对于不同的容器类型使用不同的属性
-            let scrollTop, scrollHeight, clientHeight
-
-            if (container === document.documentElement || container === document.body) {
-                // document 或 body 的滚动
-                scrollTop = window.pageYOffset || document.documentElement.scrollTop
-                scrollHeight = Math.max(
-                    document.body.scrollHeight,
-                    document.documentElement.scrollHeight,
-                    document.body.offsetHeight,
-                    document.documentElement.offsetHeight,
-                    document.body.clientHeight,
-                    document.documentElement.clientHeight
-                )
-                clientHeight = window.innerHeight || document.documentElement.clientHeight
-            } else {
-                // 普通元素的滚动
-                scrollTop = container.scrollTop
-                scrollHeight = container.scrollHeight
-                clientHeight = container.clientHeight
-            }
-
-            // 检查是否在底部（允许30px误差）
-            if (scrollHeight > clientHeight) { // 确保有滚动条
-                const isAtBottom = scrollTop + clientHeight >= scrollHeight - 30
-                return isAtBottom
-            }
-        }
-    }
-
-    // 默认返回 true（假设在底部）
-    return true
-}
-
-// 修改 scrollToBottom 函数 - 使用更精确的选择器和多重尝试
-const scrollToBottom = () => {
-    nextTick(() => {
-        setTimeout(() => {
-            // 尝试多种方式获取滚动容器
-            const selectors = [
-                '.van-pull-refresh__track',
-                '.container',
-                '.van-pull-refresh'
-            ]
-
-            for (let selector of selectors) {
-                const element = document.querySelector(selector)
-                if (element && element.scrollHeight > 0) {
-                    element.scrollTop = element.scrollHeight
-                    break
-                }
-            }
-
-            // 如果上面的方法都不行，尝试直接滚动整个页面
-            if (document.body.scrollHeight > window.innerHeight) {
-                window.scrollTo(0, document.body.scrollHeight)
-            }
-        }, 100)
-    })
 }
 
 onMounted(async () => {
@@ -131,9 +73,22 @@ onMounted(async () => {
 
     nextTick(() => {
         setTimeout(() => {
-            scrollToBottom()
+            scrollToBottom([
+                '.van-pull-refresh__track',
+                '.container',
+                '.van-pull-refresh'
+            ])
         }, 300)
     })
+})
+
+watch(chatRecord, () => {
+    const chatEntry = chatMap.value.get(parseInt(friendId))
+    if (chatEntry) {
+        chatEntry.cnt = 0
+        chatEntry.status = 'READ'
+        chatMap.value.set(parseInt(friendId), chatEntry)
+    }
 })
 
 const refreshing = ref(false)
@@ -179,16 +134,33 @@ const publish = async () => {
         'content': content.value,
         'createdAt': new Date().toISOString()
     })
+    chatMap.value.set(parseInt(friendId), {
+        type: 'private_message',
+        from_user_id: parseInt(friendId),
+        from_user_nickname: nickname,
+        from_user_avatar: friendAvatarUrl,
+        content: content.value,
+        cnt: 0,
+        status: 'READ'
+    })
     content.value = ''
     // 发送消息后立即滚动
     setTimeout(() => {
-        scrollToBottom()
+        scrollToBottom([
+            '.van-pull-refresh__track',
+            '.container',
+            '.van-pull-refresh'
+        ])
     }, 50)
 }
 
 const handleNew = () => {
     setTimeout(() => {
-        scrollToBottom()
+        scrollToBottom([
+            '.van-pull-refresh__track',
+            '.container',
+            '.van-pull-refresh'
+        ])
     }, 50)
     showNew.value = false
 }

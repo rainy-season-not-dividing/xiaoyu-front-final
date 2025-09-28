@@ -1,5 +1,4 @@
 <script setup>
-import { useUserStore } from '@/stores'
 import { useRouter } from 'vue-router'
 import { onMounted, onUnmounted } from 'vue'
 
@@ -24,7 +23,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <router-view></router-view>
+  <router-view />
 </template>
 
 <style lang="less" scoped></style>

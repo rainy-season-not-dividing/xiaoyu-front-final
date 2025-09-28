@@ -21,3 +21,11 @@ export const getChatRecord = ({ page, size, friendId }) => {
         }
     })
 }
+
+// 好友申请
+export const applyFriend = (friendId,message) => {
+    return request.post('/api/friends/request', {
+        friendId,
+        message
+    })
+}

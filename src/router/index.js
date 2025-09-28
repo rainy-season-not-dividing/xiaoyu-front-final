@@ -81,10 +81,6 @@ const router = createRouter({
       component: () => import('@/views/post/PostPublish.vue')
     },
     {
-      // 我的朋友圈列表页
-      path: '/myposts/list'
-    },
-    {
       // 加好友申请信息页
       path: '/friends/apply'
     },
@@ -136,7 +132,7 @@ const router = createRouter({
     {
       // 系统通知 互动通知页
       path: '/notice/:type',
-      component: () => import('@/views/message/NoticList.vue')
+      component: () => import('@/views/message/NoticeList.vue')
     }
   ],
 })

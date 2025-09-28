@@ -170,7 +170,7 @@ const cancel = async (id, event) => {
   </div>
 </template>
 
-<style scoped>
+<style lang="less" scoped>
 .btn {
   border-radius: 10px;
   width: 50px;

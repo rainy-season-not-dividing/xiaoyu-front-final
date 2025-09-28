@@ -30,35 +30,35 @@ const noticeList = ref([
     }
 ])
 
-onMounted(async () => {
-    const { data: { data } } = await getNoticeList(type.value, page.value, size.value)
-    noticeList.value = data.list
-})
+// onMounted(async () => {
+//     const { data: { data } } = await getNoticeList(type.value, page.value, size.value)
+//     noticeList.value = data.list
+// })
 
 const loading = ref(false);
 const finished = ref(false);
 const refreshing = ref(false);
 
 const onLoad = async () => {
-    if (refreshing.value) {
-        noticeList.value = []
-        refreshing.value = false
-        page.value = 1
-    }
+    // if (refreshing.value) {
+    //     noticeList.value = []
+    //     refreshing.value = false
+    //     page.value = 1
+    // }
 
-    const { data: { data } } = await getNoticeList(type.value, page.value, size.value)
-    if (page.value === 1) {
-        noticeList.value = data.list
-    } else {
-        noticeList.value.push(...data.list)
-    }
+    // const { data: { data } } = await getNoticeList(type.value, page.value, size.value)
+    // if (page.value === 1) {
+    //     noticeList.value = data.list
+    // } else {
+    //     noticeList.value.push(...data.list)
+    // }
 
-    loading.value = false
-    ++page.value
+    // loading.value = false
+    // ++page.value
 
-    if (list.value.length >= data.pagination.total) {
-        finished.value = true
-    }
+    // if (list.value.length >= data.pagination.total) {
+    //     finished.value = true
+    // }
 }
 
 const onRefresh = () => {

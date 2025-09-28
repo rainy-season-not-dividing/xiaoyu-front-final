@@ -5,6 +5,7 @@ import { ref, onMounted } from "vue"
 import { useRoute, useRouter } from "vue-router"
 import defaultAvatar from '@/assets/image/default.png'
 import { timeAgo } from "@/utils/timeFormat"
+import { applyFriend } from "@/api/friends"
 
 const route = useRoute()
 const router = useRouter()
@@ -79,6 +80,11 @@ const handleClick = () => {
         }
     })
 }
+
+const addUser = async (verifyMessage) => {
+    await applyFriend(userInfo.value.id,verifyMessage)
+    showSuccessToast('已发送申请')
+}
 </script>
 
 <template>
@@ -129,8 +135,9 @@ const handleClick = () => {
                         </div>
 
                         <div class="btn">
-                            <div class="follow">
-                                <van-button class="follow-btn" type="primary" round color="#60a5fa">加好友</van-button>
+                            <div class="follow" v-if="!userInfo.isFriend">
+                                <van-button class="follow-btn" type="primary" round color="#60a5fa"
+                                    @click="addUser">加好友</van-button>
                             </div>
 
                             <div class="chat" @click.stop="handleClick">

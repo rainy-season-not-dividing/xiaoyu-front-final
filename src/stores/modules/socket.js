@@ -257,7 +257,7 @@ export const useWebSocketStore = defineStore(
 
             // 在已存在的计数基础上累加（如果没有则从0开始）
             payload.cnt = (message?.cnt || 0) + 1
-            
+
             payload.status = 'UNREAD' // 标记为未读
 
             // 存储私信消息（按发送者ID存储最新消息）

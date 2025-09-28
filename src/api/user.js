@@ -70,3 +70,9 @@ export const searchUser = (keyword, page, size) => {
 export const getUserAccount = () => {
     return request.get('/api/auth/generate-account')
 }
+
+//获取我的收藏
+export const getSelfAllCollection = () => {
+    ///posts/favorite
+    return request.get(`/api/posts/favorite`)
+}

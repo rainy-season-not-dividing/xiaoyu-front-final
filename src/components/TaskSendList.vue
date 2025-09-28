@@ -250,16 +250,18 @@ const tags = ref(
       <van-tab title="我发布的" data-v-inspector="src/components/TaskSendList.vue:249:7">
         <van-pull-refresh v-model="refreshing" @refresh="onRefresh"
           data-v-inspector="src/components/TaskSendList.vue:250:9">
-          <van-list  v-model:loading="loading" :finished="finished" finished-text="没有更多了" 
-            @load="onLoad" data-v-inspector="src/components/TaskSendList.vue:251:11" >
+          <van-list v-model:loading="loading" :finished="finished" finished-text="没有更多了" @load="onLoad"
+            data-v-inspector="src/components/TaskSendList.vue:251:11">
             <div class="article-background">
-  <div class="article" v-for="item in form" :key="item.id" @click="goDetail(item.id)"
+              <div class="article" v-for="item in form" :key="item.id" @click="goDetail(item.id)"
                 data-v-inspector="src/components/TaskSendList.vue:252:13">
 
                 <div class="title" style="margin-top: 2%;" data-v-inspector="src/components/TaskSendList.vue:254:15">
-                  <span style="font-weight: 600;" data-v-inspector="src/components/TaskSendList.vue:255:17">{{ item.title
+                  <span style="font-weight: 600;" data-v-inspector="src/components/TaskSendList.vue:255:17">{{
+                    item.title
                     }}</span>
-                  <span class="reward" data-v-inspector="src/components/TaskSendList.vue:256:17">￥{{ item.reward }}</span>
+                  <span class="reward" data-v-inspector="src/components/TaskSendList.vue:256:17">￥{{ item.reward
+                    }}</span>
                 </div>
 
                 <div class="content" data-v-inspector="src/components/TaskSendList.vue:259:15">
@@ -294,7 +296,8 @@ const tags = ref(
                   <div class="tag-bottom" data-v-inspector="src/components/TaskSendList.vue:288:17"><van-icon name="eye"
                       data-v-inspector="src/components/TaskSendList.vue:288:41" />{{ item.stats.viewCnt }}</div>
                   <div class="tag-bottom" data-v-inspector="src/components/TaskSendList.vue:289:17"><van-icon
-                      name="comment-o" data-v-inspector="src/components/TaskSendList.vue:289:41" />{{ item.stats.orderCnt
+                      name="comment-o" data-v-inspector="src/components/TaskSendList.vue:289:41" />{{
+                        item.stats.orderCnt
                     }}</div>
                   <!-- <div class="tag-bottom">{{timeAgo(item.createdAt) }}创建</div> -->
                   <div class="tag-bottom" data-v-inspector="src/components/TaskSendList.vue:291:17">编辑于{{
@@ -302,11 +305,11 @@ const tags = ref(
 
                 </div>
 
-                
+
               </div>
             </div>
-            
-            
+
+
             <div class="no-task" v-show="!form" data-v-inspector="src/components/TaskSendList.vue:310:13">
 
               <van-icon name="warning-o" data-v-inspector="src/components/TaskSendList.vue:312:15" />
@@ -320,10 +323,11 @@ const tags = ref(
 </template>
 
 
-<style scoped>
+<style lang="less" scoped>
 .article-background {
   height: 100vh;
 }
+
 .modal {
 
   position: fixed;
@@ -516,7 +520,7 @@ const tags = ref(
   /* 关键：作为绝对定位元素的参考 */
   margin-left: 5%;
   width: 90%;
-  
+
   background-color: rgb(250, 250, 250);
   margin-top: 3%;
   border-radius: 20px;

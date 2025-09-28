@@ -5,7 +5,7 @@ import { useRouter } from 'vue-router'
 import { getSelfAllPost, deleteSelfPost, cancelCollectPost } from '@/api/posts'
 import { useUserStore } from '@/stores'
 import { timeAgo } from '@/utils/timeFormat'
-
+import { getSelfAllCollection } from '@/api/user'
 
 
 const userStore = useUserStore()
@@ -30,85 +30,30 @@ const onClickRight = () => {
     isManaging.value = !isManaging.value
 }
 
-
-正式
+const form = ref([]);
+//正式
 onMounted(async () => {
-    const { data: { data } } = await getSelfAllCollection(userId);
+    const { data: { data } } = await getSelfAllCollection();
     form.value = data.list;
 }
 )
 
-const form = ref([]);
-
-// //测试
-// form.value=[{
-//                             "id": 2001,
-//                             "user": {
-//                               "id": 1001,
-//                               "nickname": "用户昵称",
-//                               "avatarUrl": "https://oss.example.com/avatar.jpg"
-//                             },
-//                             "content": "Lorem ipsum dolor sit amet consectetur adipisicing elit. Debitis provident natus dolor ullam fuga rem laudantium inventore similique ut saepe, dignissimos consequatur delectus rerum non quam? Quod repellat accusantium vel!",
-//                             "visibility": "PUBLIC",
-//                             "poiName": "天安门广场",
-//                             "isTop": 0,
-//                             "status": "PUBLISHED",
-//                             "files": [
-//                               {
-//                                 "id": 1001,
-//                                 //https://www.dmoe.cc/random.php
-//                                 "fileUrl": "/assets/1.jpg",
-//                                 "thumbUrl": "https://cdn.example.com/posts/1001_thumb.jpg",
-//                                 "size": 1024000
-//                               }
-//                             ],
-//                             "topics": [
-//                               {
-//                                 "id": 1,
-//                                 "name": "#北京旅游#"
-//                               }
-//                             ],
-//                             "tags": [
-//                               {
-//                                 "id": 1,
-//                                 "name": "旅游"
-//                               }
-//                             ],
-//                             "stats": {
-//                               "viewCnt": 100,
-//                               "likeCnt": 10,
-//                               "commentCnt": 5,
-//                               "shareCnt": 2
-//                             },
-//                             "user_actions": {
-//                               "isLiked": false,
-//                               "isFavorited": false
-//                             },
-//                             "createdAt": "2023-01-01T00:00:00Z",
-//                             "updatedAt": "2023-01-01T00:00:00Z"
-
-//                         }]
 
 
-  //点击文章旁边的删除按钮
-  const deleteArticle=(id, event)=>
-  {
+
+
+//点击文章旁边的删除按钮
+const deleteArticle = (id, event) => {
     //禁用页面刷新
     event.stopPropagation()
     event.preventDefault()
-    console.log("准备取消收藏文章:"+id);
+    console.log("准备取消收藏文章:" + id);
     //调用确认是否删除的模态框
-    deleteId.value=id;
-    showconfirm.value=true;
-    console.log("showconfirm:"+showconfirm.value);
+    deleteId.value = id;
+    showconfirm.value = true;
+    console.log("showconfirm:" + showconfirm.value);
 
-  };
-  //点击模态框上的取消按钮
-  const cancel=()=>
-  {
-    console.log("取消删除文章");
-    confirm.value=false;
-  }
+};
 
 
 
@@ -148,27 +93,6 @@ const goDetail = (id) => {
 //删除和编辑按钮的onclick方法传入文章id,之后跳转页面
 //点击文章本身的onclick方法传入文章id，之后跳转页面
 </script>
-
-
-
-<style>
-.no-content {
-    position: fixed;
-    inset: 0;
-    /* top:0 right:0 bottom:0 left:0 */
-    margin: auto;
-    /* 关键：自动把剩余空间均分给四边 */
-    width: max-content;
-    /* 或具体值，如 200px */
-    height: max-content;
-    /* 或具体值，如 60px */
-    color: rgb(156, 156, 156);
-}
-
-.action {
-    opacity: 1;
-}
-</style>
 
 <template>
 
@@ -231,11 +155,28 @@ const goDetail = (id) => {
 </template>
 
 
-<style>
+<style lang="less" scoped>
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+}
+
+.no-content {
+    position: fixed;
+    inset: 0;
+    /* top:0 right:0 bottom:0 left:0 */
+    margin: auto;
+    /* 关键：自动把剩余空间均分给四边 */
+    width: max-content;
+    /* 或具体值，如 200px */
+    height: max-content;
+    /* 或具体值，如 60px */
+    color: rgb(156, 156, 156);
+}
+
+.action {
+    opacity: 1;
 }
 
 .profile {

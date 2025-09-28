@@ -6,7 +6,7 @@ import { useRoute, useRouter } from "vue-router";
 import defaultAvatar from "@/assets/image/default.png"
 import { timeAgo } from "@/utils/timeFormat"
 import { useUserStore } from '@/stores'
-import { handleInputFocus, handleInputBlur, scrollToInput } from '@/utils/moveKeyboard'
+import { handleInputFocus, handleInputBlur, scrollToInput } from '@/utils/move'
 
 const userStore = useUserStore()
 
@@ -219,25 +219,25 @@ const publish = async () => {
 
     if (isReply) {
         // 二级评论
-        await publishComment(postId, {
+        const { data: { data } } = await publishComment(postId, {
             content: commentContent.value,
             parentId: currentReplyTo.value,
             atUsers: atUsers.value
         })
-        const { data: { data } } = await getCommentList(route.params.id, { page: 1, size: commentSize.value })
 
-        commentList.value = data.list
+        data.isLiked = false
+        data.likeCnt = 0
+
+        findCommentById(currentReplyTo.value).replies.push(data)
     } else {
         // 一级评论
-        await publishComment(postId, {
+        const { data: { data } } = await publishComment(postId, {
             content: commentContent.value,
             parentId: 0,
             atUsers: atUsers.value
         })
 
-        const { data: { data } } = await getCommentList(route.params.id, { page: commentPage.value, size: commentSize.value })
-
-        commentList.value = data.list
+        commentList.value.unshift(data)
     }
     commentContent.value = ''
     currentReplyTo.value = null
@@ -323,7 +323,7 @@ const deleteUserComment = async (commentId, type, parentId) => {
                             <div class="text">
                                 <van-icon name="chat-o" />
                                 <span class="comment-text" v-if="post?.stats?.commentCnt">{{ post.stats.commentCnt
-                                    }}</span>
+                                }}</span>
                             </div>
                         </div>
                     </div>
@@ -434,7 +434,7 @@ const deleteUserComment = async (commentId, type, parentId) => {
                                 <div class="comment-user">
                                     <img round :src="reply.user.avatarUrl || defaultAvatar" class="comment-avatar" />
                                     <span class="comment-nickname">{{ reply.user.nickname
-                                        }}</span>
+                                    }}</span>
                                 </div>
 
                                 <div class="comment-content">
