@@ -2,6 +2,8 @@
 import { useRouter } from 'vue-router';
 import { onMounted, ref, computed } from 'vue'
 import { getUserInfo, updateUerInfo } from '@/api/user'
+import { uploadFile } from '@/api/upload'
+import defaultAvatar from '@/assets/image/default.png'
 
 const formModel = ref({
     nickname: '',
@@ -11,15 +13,17 @@ const formModel = ref({
     campusName: '',
     privacyBirthday: '',
     privacyMobile: '',
-    privacyFans: '',
-    files: []
+    privacyFans: ''
 })
+
+const avatar = ref([])
 
 onMounted(async () => {
     const { data: { data } } = await getUserInfo()
-    if (data) {
-        formModel.value = data
-    }
+    formModel.value = data
+    avatar.value = [
+        { url: data.avatarUrl }
+    ]
 })
 
 const router = useRouter()
@@ -48,19 +52,17 @@ const onDateConfirm = ({ selectedValues }) => {
     showDatePicker.value = false
 }
 
-const onSubmit = async () => {
+const handleRead = async (file) => {
+    // 上传图片后直接发请求给后端
     const fd = new FormData()
-    if (formModel.value.files && formModel.value.files.length > 0) {
-        for (const file in formModel.value.files) {
-            fd.append('files', formModel.value.files[file].file)
-        }
-    }
-    for (const key in formModel.value) {
-        if (key !== 'files') {
-            fd.append(key, formModel.value[key])
-        }
-    }
-    await updateUerInfo(fd)
+    fd.append('file', file.file)
+    console.log(file)
+    const { data: { data } } = await uploadFile(fd)
+    formModel.value.avatarUrl = data
+}
+
+const onSubmit = async () => {
+    await updateUerInfo(formModel.value)
     await router.push('/me')
     showSuccessToast('修改成功')
 }
@@ -69,15 +71,9 @@ const onSubmit = async () => {
 <template>
     <van-nav-bar title="资料修改" left-arrow @click-left="router.back()" />
     <van-form @submit="onSubmit">
-        <van-field name="uploader" label="头像">
-            <template #input>
-                <van-uploader v-model="formModel.files" :max-count="1" class="avatar-uploader">
-                    <template v-if="(!formModel.files || formModel.files.length === 0) && formModel.avatarUrl" #default>
-                        <img :src="formModel.avatarUrl" round fit="cover" class="avatar" />
-                    </template>
-                </van-uploader>
-            </template>
-        </van-field>
+
+        <van-uploader v-model="avatar" :after-read="handleRead" max-count="1" class="avatar" reupload
+            :deletable="false" />
 
         <van-field v-model="formModel.nickname" name="昵称" label="昵称" placeholder="请输入昵称" :rules="[{ required: true, message: '请填写昵称' },
         { pattern: /^.{1,30}$/, message: '昵称长度为1-30个字符' }, { pattern: /^[^\d]/, message: '昵称不能以数字开头' }
@@ -139,7 +135,7 @@ const onSubmit = async () => {
 </template>
 
 <style lang="less" scoped>
-img {
+:deep(.van-image__img) {
     width: 60px;
     height: 60px;
     border-radius: 50%;

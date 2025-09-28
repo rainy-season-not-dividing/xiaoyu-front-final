@@ -19,9 +19,9 @@ const form = ref({
     visibility: '',
     poiLat: '',
     poiLng: '',
-    poiName: '武汉理工大学',
+    poiName: '',
     files: [],
-    topicIds: []
+    topics: []
 })
 
 const fileList = ref([])
@@ -36,15 +36,8 @@ onMounted(async () => {
 onMounted(async () => {
     if (isEdit.value) {
         const { data: { data } } = await getPostDetail(route.params.id)
-        form.value = {
-            title: data.title,
-            content: data.content,
-            visibility: data.visibility,
-            poiName: data.poiName,
-            poiLat: data.poiLat,
-            poiLng: data.poiLng,
-            tagIds: data.tags.map(tag => tag.id)
-        }
+        form.value = data
+        form.value.poiName = '武汉理工大学'
         // 处理文件回显
         if (data.files && data.files.length > 0) {
             // 用于存储信息
@@ -60,10 +53,10 @@ onMounted(async () => {
 const showTopicList = ref(false)
 
 const selectTopic = (topicId) => {
-    if (form.value.topicIds.includes(topicId)) {
-        form.value.topicIds.splice(form.value.topicIds.indexOf(topicId), 1)
+    if (form.value.topics.includes(topicId)) {
+        form.value.topics.splice(form.value.topicIds.indexOf(topicId), 1)
     } else {
-        form.value.topicIds.push(topicId)
+        form.value.topics.push(topicId)
     }
 }
 
@@ -156,7 +149,7 @@ const getAddressFromCoordinates = (lat, lng) => {
 const handleRead = async (file) => {
     // 上传图片后直接发请求给后端
     const fd = new FormData()
-    fd.append('file', file)
+    fd.append('file', file.file)
     const { data: { data } } = await uploadFile(fd)
     form.value.files.push(data)
 }
@@ -166,7 +159,7 @@ const handleDelete = (file, detail) => {
     const index = detail.index
 
     // 从预览列表中删除
-    files.value.splice(index, 1)
+    fileList.value.splice(index, 1)
 
     // 从表单数据中删除对应的文件信息
     if (form.value.files[index]) {
@@ -225,19 +218,21 @@ const handlePrivacy = (val) => {
                     添加图片（可选）
                 </span>
             </p>
-            <van-uploader v-model="fileList" :after-read="handleRead" :before-delete="handleDelete" />
+
+            <van-uploader v-model="fileList" :after-read="handleRead" :before-delete="handleDelete" class="uploader" />
+
         </div>
 
         <div class="function">
-            <div class="topics" @click="showTopicList = !showTopicList">
+            <div class="topics">
                 <div class="list" :class="{ 'list-show': showTopicList }">
                     <div v-for="item in topicList" :key="item.id" class="item" @click.stop="selectTopic(item.id)"
-                        :class="{ 'selected': form.topicIds.includes(item.id) }">
+                        :class="{ 'selected': form.topics.includes(item.id) }">
                         {{ item.name }}
                     </div>
                 </div>
 
-                <div class="title" @click="">
+                <div class="title" @click="showTopicList = !showTopicList">
                     <div class="icon">
                         <van-icon class-prefix="my-icon" name="hashjinghao" />
                     </div>
@@ -266,6 +261,7 @@ const handlePrivacy = (val) => {
             </div>
         </div>
 
+
         <div class="position">
             <van-icon name="location-o" />
             <div class="text">
@@ -290,9 +286,17 @@ const handlePrivacy = (val) => {
 </template>
 
 <style lang="less" scoped>
+// 添加清除浮动的样式
+.clearfix {
+    clear: both;
+}
+
+.uploader {
+    height: auto; // 修改高度
+}
+
 :deep(.van-nav-bar__text) {
     color: #999999;
-    /* 浅灰色取消文字 */
     font-size: 16px;
 }
 
@@ -304,10 +308,11 @@ const handlePrivacy = (val) => {
 }
 
 .container {
-    height: 100vh;
+    min-height: 100vh; // 修改为min-height
     background-color: #fafafc;
     position: relative;
     padding-top: 10px;
+    padding-bottom: 20px; // 添加底部padding
 
     .avatar-nickname {
         margin-top: 50px;
@@ -338,125 +343,136 @@ const handlePrivacy = (val) => {
     }
 
     .photo {
-        margin-left: 15px;
         margin-top: 10px;
+        background-color: white;
+
+        .photo-title {
+            margin-bottom: 10px; // 添加底部边距
+        }
 
         .title-text {
             font-size: 14px;
             font-weight: bold;
             color: #57616d;
-            margin-bottom: 10px;
         }
 
         :deep(.van-uploader__wrapper) {
-            margin-left: 10px;
             display: grid;
-            grid-template-columns: repeat(3, 30%); // 三列均分
+            grid-template-columns: repeat(3, 1fr); // 使用fr单位
             grid-gap: 10px;
         }
 
         :deep(.van-uploader__preview),
         :deep(.van-uploader__upload) {
-            width: 100%;
-            aspect-ratio: 1; // 关键属性：保持宽高比为1:1
-            height: auto; // 让高度根据宽度自动计算
+            margin-left: 5px;
+            width: calc((100vw - 60px) / 3);
+            aspect-ratio: 1;
+            height: auto;
         }
 
         :deep(.van-uploader__preview-image) {
-            width: 100%;
-            height: 100%;
+            width: calc((100vw - 50px) / 3); // 计算宽度，考虑间距
+            aspect-ratio: 1;
+            height: auto;
             object-fit: cover;
-        }
-
-        :deep(.van-uploader__upload) {
-            display: none;
+            border-radius: 4px; // 添加圆角
         }
     }
-}
 
-.function {
-    margin-top: 20px;
-    background-color: #fafafc;
-    display: flex;
-    justify-content: center;
-    font-size: 16px;
-    color: #9ca3af;
-
-    .topics,
-    .privacy {
-        position: relative;
+    .function {
+        margin: 20px 15px; // 统一设置margin
+        background-color: #fafafc;
         display: flex;
-        flex-direction: column;
         justify-content: center;
-        align-items: center;
-        margin-bottom: 10px;
-        width: 48%;
-        aspect-ratio: 3;
-        height: auto;
-        background-color: white;
-        border-radius: 5px;
+        font-size: 16px;
+        color: #9ca3af;
 
-        .title {
+        .topics,
+        .privacy {
+            position: relative;
             display: flex;
             flex-direction: column;
+            justify-content: center;
             align-items: center;
-        }
-
-        .list {
-            position: absolute;
-            width: 48vw;
-            max-height: 100px;
-            overflow-y: auto;
+            width: 48%;
+            height: 80px; // 固定高度
             background-color: white;
-            border: 1px solid #e5e5e5;
-            display: none;
-            bottom: calc(48vw / 3);
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); // 添加阴影
 
-            &.list-show {
-                display: block;
+            .title {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
             }
 
-            .item {
-                text-align: center;
-                margin-bottom: 3px;
+            .list {
+                position: absolute;
+                width: 100%;
+                max-height: 150px;
+                overflow-y: auto;
+                background-color: white;
+                border: 1px solid #e5e5e5;
+                border-radius: 5px;
+                display: none;
+                bottom: 100%; // 修改定位
+                left: 0;
+                z-index: 100;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+
+                &.list-show {
+                    display: block;
+                }
+
+                .item {
+                    text-align: center;
+                    padding: 8px 0;
+                    border-bottom: 1px solid #f0f0f0;
+
+                    &:last-child {
+                        border-bottom: none;
+                    }
+
+                    &.selected {
+                        color: #60a5fa;
+                        border: 1px solid #60a5fa;
+                        border-radius: 5px;
+                    }
+                }
             }
         }
-    }
 
-    .topics {
-        border-right: 1px solid #e5e5e5;
+        .topics {
+            border-right: 1px solid #e5e5e5;
+        }
     }
 }
 
 .position {
-    margin-top: 20px;
-    margin-left: 15px;
+    margin: 20px 15px; // 统一设置margin
     display: flex;
     align-items: center;
     font-size: 16px;
     color: #9ca3af;
 }
 
-.warn-text {
-    margin-top: 20px;
-    height: 60px;
-    background-color: #f3f4f6;
-    border-radius: 10px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+.warn {
+    margin: 0 15px; // 统一设置margin
 
-    .text-span {
-        margin-top: 0;
-        margin-bottom: 5px;
-        font-size: 14px;
-        color: #9da3af;
+    .warn-text {
+        height: 60px;
+        background-color: #f3f4f6;
+        border-radius: 10px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+
+        .text-span {
+            margin: 0;
+            padding: 2px 10px;
+            font-size: 14px;
+            color: #9da3af;
+        }
     }
-}
-
-.selected {
-    color: #60a5fa;
-    border: 1px solid #60a5fa;
-    border-radius: 5px;
 }
 </style>

@@ -3,12 +3,12 @@ import { onMounted } from 'vue'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { getSelfAllPost, deleteSelfPost, cancelCollectPost } from '@/api/posts'
-import { useUserStore } from '@/stores'
+// import { useUserStore } from '@/stores'
 import { timeAgo } from '@/utils/timeFormat'
 import { getSelfAllCollection } from '@/api/user'
 
 
-const userStore = useUserStore()
+// const userStore = useUserStore()
 
 
 
@@ -20,7 +20,7 @@ let deleteId = ref(0);
 const isManaging = ref(false)
 
 
-const userId = userStore.userInfo.id;
+// const userId = userStore.userInfo.id;
 
 const onClickLeft = () => history.back();
 

@@ -17,7 +17,7 @@ const form = ref({
     visibility: 'PUBLIC',
     expireAt: '',
     tagIds: [],
-    files: []
+    fileUrls: []
 })
 
 const fileList = ref([])
@@ -37,7 +37,7 @@ onMounted(async () => {
         // 处理文件回显
         if (data.files && data.files.length > 0) {
             // 用于存储信息
-            form.value.files.value = data.files.map(file => file.fileUrl)
+            form.value.fileUrls = data.files.map(file => file.fileUrl)
             // 用于预览
             fileList.value = data.files.map(file => ({
                 url: file.fileUrl  // 用于预览的图片链接
@@ -49,9 +49,9 @@ onMounted(async () => {
 const handleRead = async (file) => {
     // 上传图片后直接发请求给后端
     const fd = new FormData()
-    fd.append('file', file)
+    fd.append('file', file.file)
     const { data: { data } } = await uploadFile(fd)
-    form.value.files.push(data)
+    form.value.fileUrls.push(data)
 }
 
 const handleDelete = (file, detail) => {
@@ -59,11 +59,11 @@ const handleDelete = (file, detail) => {
     const index = detail.index
 
     // 从预览列表中删除
-    files.value.splice(index, 1)
+    fileList.value.splice(index, 1)
 
     // 从表单数据中删除对应的文件信息
-    if (form.value.files[index]) {
-        form.value.files.splice(index, 1)
+    if (form.value.fileUrls[index]) {
+        form.value.fileUrls.splice(index, 1)
     }
 
     // 表示允许删除操作继续进行
@@ -73,11 +73,12 @@ const handleDelete = (file, detail) => {
 // 提交：区分新增 修改
 const onSubmit = async () => {
     if (isEdit.value) {
-        await editTask(route.params.id, fd)
+        console.log(form.value.fileUrls)
+        await editTask(route.params.id, form.value)
         await router.back()
         showSuccessToast('修改成功')
     } else {
-        await publishTask(fd)
+        await publishTask(form.value)
         await router.back()
         showSuccessToast('发布成功')
     }

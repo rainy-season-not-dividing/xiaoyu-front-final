@@ -37,7 +37,7 @@ export const takeTask = (task_id) => {
 }
 
 // 发布任务
-export const publishTask = ({title,content,reward,visibility,expireAt,tagIds,files}) => {
+export const publishTask = ({ title, content, reward, visibility, expireAt, tagIds, files }) => {
     return request.post('/api/tasks', {
         title,
         content,
@@ -50,15 +50,15 @@ export const publishTask = ({title,content,reward,visibility,expireAt,tagIds,fil
 }
 
 // 编辑任务
-export const editTask = (task_id, {title,content,reward,visibility,expireAt,tagIds,files}) => {
-    return request.put(`/api/tasks/${task_id}`,{
+export const editTask = (task_id, { title, content, reward, visibility, expireAt, tagIds, fileUrls }) => {
+    return request.put(`/api/tasks/${task_id}`, {
         title,
         content,
         reward,
         visibility,
         expireAt,
         tagIds,
-        files
+        fileUrls
     })
 }
 

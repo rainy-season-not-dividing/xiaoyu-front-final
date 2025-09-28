@@ -28,11 +28,7 @@ export const logout = () => {
 
 // 更新用户信息
 export const updateUerInfo = (fd) => {
-    return request.put('/api/users/profile', fd, {
-        headers: {
-            'Content-Type': 'multipart/form-data'
-        }
-    })
+    return request.put('/api/users/profile', fd)
 }
 
 // 获取黑名单列表
@@ -76,3 +72,9 @@ export const getSelfAllCollection = () => {
     ///posts/favorite
     return request.get(`/api/posts/favorite`)
 }
+
+//获取喜欢的动态
+export const getSelfAllLisk= () => {
+    ///posts/favorite
+    return request.get(`/api/posts/like`)
+}    
