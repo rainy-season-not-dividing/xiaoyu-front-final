@@ -124,9 +124,24 @@ const collect = async () => {
     }
 }
 
-const share = async () => {
-    const { data: data } = await sharePost(postId)
-    post.value.stats.shareCnt = data.shareCnt
+const showShare = ref(false)
+
+const options = [
+    { name: '好友', icon: 'chat' },
+    { name: '微信', icon: 'wechat' },
+    { name: '微博', icon: 'weibo' },
+    { name: '复制链接', icon: 'link' },
+    { name: '分享海报', icon: 'poster' },
+    { name: '二维码', icon: 'qrcode' }
+]
+
+const onSelect = async (option) => {
+    if (option.name === '好友') {
+        const { data: { data } } = await sharePost(postId)
+        post.value.stats.shareCnt = data.shareCnt
+        showSuccessToast('分享成功')
+    }
+    showShare.value = false
 }
 
 // 根据id查找comment
@@ -334,10 +349,14 @@ const deleteUserComment = async (commentId, type, parentId) => {
                             <van-icon name="bookmark-o" v-else />
                         </div>
 
-                        <div class="share" @click="share()">
+                        <div class="share" @click="showShare = true">
                             <van-icon name="share-o" />
                             <span class="share-text" v-if="post?.stats?.shareCnt">{{ post.stats.shareCnt }}</span>
                         </div>
+
+                        <van-share-sheet v-model:show="showShare" title="立即分享给好友" :options="options"
+                            @select="onSelect" />
+
                     </div>
                 </div>
             </div>
