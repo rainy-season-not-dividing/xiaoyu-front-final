@@ -7,6 +7,7 @@ import defaultAvatar from "@/assets/image/default.png"
 import { timeAgo } from "@/utils/timeFormat"
 import { useUserStore } from '@/stores'
 import { handleInputFocus, handleInputBlur, scrollToInput } from '@/utils/move'
+import ShareIndex from "@/components/ShareIndex.vue";
 
 const userStore = useUserStore()
 
@@ -55,18 +56,20 @@ const refreshing = ref(false)
 
 const friendsList = ref([])
 
+
+const shareCnt = ref(0)
+
 onMounted(async () => {
     const { data: { data } } = await getPostDetail(postId)
     post.value = data
-    console.log(post.value)
 
-    const { data: { data: d1 } } = await getCommentList(route.params.id, { page: commentPage.value, size: commentSize.value })
-    commentList.value = d1.list
-    console.log(commentList.value)
+    shareCnt.value = post.stats.shareCnt
+
+    // const { data: { data: d1 } } = await getCommentList(route.params.id, { page: commentPage.value, size: commentSize.value })
+    // commentList.value = d1.list
 
     const { data: { data: d2 } } = await getFriendsList({ page: 0, size: 0, status: 'ACCEPTED' })
     friendsList.value = d2.list
-    console.log(friendsList.value)
 })
 
 const onLoad = async () => {
@@ -125,24 +128,6 @@ const collect = async () => {
 }
 
 const showShare = ref(false)
-
-const options = [
-    { name: '好友', icon: 'chat' },
-    { name: '微信', icon: 'wechat' },
-    { name: '微博', icon: 'weibo' },
-    { name: '复制链接', icon: 'link' },
-    { name: '分享海报', icon: 'poster' },
-    { name: '二维码', icon: 'qrcode' }
-]
-
-const onSelect = async (option) => {
-    if (option.name === '好友') {
-        const { data: { data } } = await sharePost(postId)
-        post.value.stats.shareCnt = data.shareCnt
-        showSuccessToast('分享成功')
-    }
-    showShare.value = false
-}
 
 // 根据id查找comment
 const findCommentById = (commentId) => {
@@ -295,11 +280,14 @@ const deleteUserComment = async (commentId, type, parentId) => {
             </div>
 
             <div class="container">
+                <div class="title">
+                    {{ post.title }}
+                </div>
                 <div class="content">
                     {{ post.content }}
                 </div>
 
-                <div class="topics">
+                <div class="topics" v-if="post?.topics.length">
                     <div class="topic-scroll-container">
                         <div class="topic-scroll-wrapper">
                             <div v-for="item in post?.topics" :key="item.id" class="topic-item">
@@ -338,7 +326,7 @@ const deleteUserComment = async (commentId, type, parentId) => {
                             <div class="text">
                                 <van-icon name="chat-o" />
                                 <span class="comment-text" v-if="post?.stats?.commentCnt">{{ post.stats.commentCnt
-                                }}</span>
+                                    }}</span>
                             </div>
                         </div>
                     </div>
@@ -354,8 +342,8 @@ const deleteUserComment = async (commentId, type, parentId) => {
                             <span class="share-text" v-if="post?.stats?.shareCnt">{{ post.stats.shareCnt }}</span>
                         </div>
 
-                        <van-share-sheet v-model:show="showShare" title="立即分享给好友" :options="options"
-                            @select="onSelect" />
+                        <ShareIndex :id="postId" :type="'POST'" v-model:showShare="showShare"
+                            v-model:shareCnt="shareCnt" />
 
                     </div>
                 </div>
@@ -453,7 +441,7 @@ const deleteUserComment = async (commentId, type, parentId) => {
                                 <div class="comment-user">
                                     <img round :src="reply.user.avatarUrl || defaultAvatar" class="comment-avatar" />
                                     <span class="comment-nickname">{{ reply.user.nickname
-                                    }}</span>
+                                        }}</span>
                                 </div>
 
                                 <div class="comment-content">
@@ -560,6 +548,13 @@ const deleteUserComment = async (commentId, type, parentId) => {
 
 .container {
     margin-top: 10px;
+    padding: 10px;
+
+    .title {
+        font-size: 18px;
+        margin-bottom: 10px;
+        font-weight: bold;
+    }
 
     .content {
         font-size: 16px;
@@ -634,14 +629,9 @@ const deleteUserComment = async (commentId, type, parentId) => {
 }
 
 .file-scroll-wrapper {
-    :deep(.img) {
-        width: 100%;
-        height: 100%;
-    }
-
     // 移除内联块显示
     display: block;
-    padding: 0 15px;
+    // padding: 0 15px;
 }
 
 .file-item {
@@ -657,7 +647,7 @@ const deleteUserComment = async (commentId, type, parentId) => {
     }
 
     .file-image {
-        width: 100%;
+        width: 100px;
         height: 100px; // 固定高度或根据需要调整
         object-fit: cover; // 保持图片比例并填充容器
     }

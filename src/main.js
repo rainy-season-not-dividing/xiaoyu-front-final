@@ -44,6 +44,14 @@ watch(
 const { latest } = storeToRefs(socketStore)
 
 router.isReady().then(() => {
+    router.afterEach(() => {
+        // 每次路由跳转后滚动到顶部
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        })
+    })
+
     /* 只要来新消息就弹窗（列表已在 Store 自动追加） */
     watch(latest, (msg) => {
         /* payload: {

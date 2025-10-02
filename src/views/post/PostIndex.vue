@@ -11,10 +11,10 @@ const postList = ref([])
 const postPage = ref(1)
 const postSize = ref(10)
 
-onMounted(async () => {
-    const { data: { data } } = await getAllPost({ page: postPage.value, size: postSize.value })
-    postList.value = data.list
-})
+// onMounted(async () => {
+//     const { data: { data } } = await getAllPost({ page: postPage.value, size: postSize.value })
+//     postList.value = data.list
+// })
 
 const postLoading = ref(false)
 const postFinished = ref(false)
@@ -163,7 +163,7 @@ const share = async (postId) => {
                                     <van-icon name="good-job" v-if="item.userActions?.isLiked" />
                                     <van-icon name="good-job-o" v-else />
                                     <span class="likes-text" v-if="item.stats.likeCnt">{{ item.stats.likeCnt
-                                        }}</span>
+                                    }}</span>
                                 </div>
                             </div>
 
@@ -172,7 +172,7 @@ const share = async (postId) => {
                                     <van-icon name="chat-o" />
                                     <span class="comment-text" v-if="item.stats.commentCnt">{{
                                         item.stats.commentCnt
-                                        }}</span>
+                                    }}</span>
                                 </div>
                             </div>
                         </div>
@@ -186,7 +186,7 @@ const share = async (postId) => {
                             <div class="share" @click="share(item.id)">
                                 <van-icon name="share-o" />
                                 <span class="share-text" v-if="item.stats.shareCnt">{{ item.stats.shareCnt
-                                    }}</span>
+                                }}</span>
                             </div>
                         </div>
                     </div>

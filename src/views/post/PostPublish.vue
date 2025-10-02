@@ -54,7 +54,7 @@ const showTopicList = ref(false)
 
 const selectTopic = (topicId) => {
     if (form.value.topics.includes(topicId)) {
-        form.value.topics.splice(form.value.topicIds.indexOf(topicId), 1)
+        form.value.topics.splice(form.value.topics.indexOf(topicId), 1)
     } else {
         form.value.topics.push(topicId)
     }
@@ -171,11 +171,13 @@ const handleDelete = (file, detail) => {
 }
 
 const onSubmit = async () => {
-    if (isEdit) {
+    if (isEdit.value) {
+        console.log("调用的update接口")
         await updatePost(route.params.id, form.value)
         await router.back()
         showSuccessToast('保存成功')
     } else {
+        console.log("调用的publish接口")
         await publishPost(form.value)
         await router.push('/')
         showSuccessToast('发布成功')
@@ -184,7 +186,6 @@ const onSubmit = async () => {
 
 const handlePrivacy = (val) => {
     form.value.visibility = val
-    showPrivacyList.value = false
 }
 </script>
 
@@ -226,7 +227,7 @@ const handlePrivacy = (val) => {
         <div class="function">
             <div class="topics">
                 <div class="list" :class="{ 'list-show': showTopicList }">
-                    <div v-for="item in topicList" :key="item.id" class="item" @click.stop="selectTopic(item.id)"
+                    <div v-for="item in topicList" :key="item.id" class="item" @click="selectTopic(item.id)"
                         :class="{ 'selected': form.topics.includes(item.id) }">
                         {{ item.name }}
                     </div>
@@ -242,15 +243,15 @@ const handlePrivacy = (val) => {
                 </div>
             </div>
 
-            <div class="privacy" @click="showPrivacyList = !showPrivacyList">
+            <div class="privacy">
                 <div class="list" :class="{ 'list-show': showPrivacyList }">
-                    <div v-for="item in privacyList" :key="item.value" class="item"
-                        @click.stop="handlePrivacy(item.value)" :class="{ 'selected': form.visibility === item.value }">
+                    <div v-for="item in privacyList" :key="item.value" class="item" @click="handlePrivacy(item.value)"
+                        :class="{ 'selected': form.visibility === item.value }">
                         {{ item.text }}
                     </div>
                 </div>
 
-                <div class="title">
+                <div class="title" @click="showPrivacyList = !showPrivacyList">
                     <div class="icon">
                         <van-icon class-prefix="my-icon" name="jiesuo" />
                     </div>
@@ -427,11 +428,8 @@ const handlePrivacy = (val) => {
                 .item {
                     text-align: center;
                     padding: 8px 0;
-                    border-bottom: 1px solid #f0f0f0;
-
-                    &:last-child {
-                        border-bottom: none;
-                    }
+                    border: 1px solid #f0f0f0;
+                    margin-bottom: 1px;
 
                     &.selected {
                         color: #60a5fa;

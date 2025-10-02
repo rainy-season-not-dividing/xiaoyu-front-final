@@ -41,8 +41,10 @@ export const cancelCollectPost = (post_id) => {
 }
 
 // 分享动态
-export const sharePost = (post_id) => {
-    return request.post(`/api/posts/${post_id}/share`)
+export const sharePost = (post_id, shareUserIds) => {
+    return request.post(`/api/posts/${post_id}/share`, {
+        shareUserIds
+    })
 }
 
 // 点赞评论

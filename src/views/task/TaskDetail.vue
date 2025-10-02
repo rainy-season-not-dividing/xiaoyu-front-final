@@ -8,11 +8,6 @@ import defaultAvatar from '@/assets/image/default.png'
 const router = useRouter()
 const route = useRoute()
 
-const handleShare = () => {
-  // 分享任务的接口
-
-}
-
 const handleAck = async () => {
   // 确认接取任务的接口
   await acceptTask(form.value.taskId)
@@ -35,7 +30,7 @@ const getTagColors = (index) => {
 }
 
 const form = ref({
-  publisherId:'',
+  publisherId: '',
   taskId: '',
   nickname: '',
   avatarUrl: '',
@@ -48,8 +43,12 @@ const form = ref({
   expireAt: '',
   createAt: '',
   fileUrls: [],
-  tagNames: []
-}) 
+  tagNames: [],
+  stats: {
+    viewCnt: '',
+    orderCnt: ''
+  }
+})
 
 onMounted(async () => {
   const { data: { data } } = await getTaskDetail(route.params.id)
@@ -67,9 +66,12 @@ onMounted(async () => {
     expireAt: data.expireAt,
     createdAt: data.createdAt,
     fileUrls: data.files.map(file => file.fileUrl),
-    tagNames: data.tags.map(tag => tag.name)
+    tagNames: data.tags.map(tag => tag.name),
+    stats: data.stats
   }
 })
+
+const showShare = ref(false)
 
 </script>
 
@@ -168,7 +170,7 @@ onMounted(async () => {
 
     <div class="bottom-bar">
       <!-- 分享任务按钮：带图标 -->
-      <button class="bottom-button share-button" @click="handleShare">
+      <button class="bottom-button share-button" @click="showShare = true">
         <van-icon name="share" color="#666" class="button-icon" />
         分享任务
       </button>
@@ -178,6 +180,8 @@ onMounted(async () => {
         立即报名
       </button>
     </div>
+
+    <share-index :id="route.params.id" :type="'TASK'" v-model:showShare="showShare" />
   </div>
 </template>
 

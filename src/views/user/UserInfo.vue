@@ -5,7 +5,10 @@ import { ref, onMounted } from "vue"
 import { useRoute, useRouter } from "vue-router"
 import defaultAvatar from '@/assets/image/default.png'
 import { timeAgo } from "@/utils/timeFormat"
-import { applyFriend } from "@/api/friends"
+import { sendFriendApply } from "@/api/friends"
+import { useUserStore } from "@/stores"
+
+const userStore = useUserStore()
 
 const route = useRoute()
 const router = useRouter()
@@ -13,9 +16,19 @@ const router = useRouter()
 const userInfo = ref({})
 const title = ref('')
 
+const campusName = ref('')
+
+const campusNames = [
+    { text: '南湖', value: 'NANHU' },
+    { text: '马房山', value: 'MAFANGSHAN' },
+    { text: '余家头', value: 'YUJIATOU' }
+]
+
 onMounted(async () => {
     const { data: { data } } = await getUserDetail(route.params.id)
     userInfo.value = data
+    console.log(data)
+    campusName.value = campusNames.find(item => item.value === data.campusName)['text']
     title.value = `${userInfo.value.nickname}的主页`
 })
 
@@ -41,6 +54,7 @@ const onLoad = async () => {
 
     const { data: { data } } = await getUserDetail(route.params.id)
     userInfo.value = data
+    campusName.value = campusNames.find(item => item.value === data.campusName)['text']
     title.value = `${userInfo.value.nickname}的主页`
 
     const { data: { data: d } } = await getUserPostList(route.params.id, page.value, size.value)
@@ -81,9 +95,19 @@ const handleClick = () => {
     })
 }
 
-const addUser = async (verifyMessage) => {
-    await applyFriend(userInfo.value.id,verifyMessage)
-    showSuccessToast('已发送申请')
+const showApply = ref(false)
+const message = ref('')
+
+const onApply = async () => {
+    await sendFriendApply(route.params.id, message.value)
+    showApply.value = false
+    showSuccessToast('申请发送成功')
+    message.value = ''
+}
+
+const onCancel = () => {
+    showApply.value = false
+    message.value = ''
 }
 </script>
 
@@ -114,7 +138,7 @@ const addUser = async (verifyMessage) => {
                                     </div>
                                 </div>
                                 <div class="campus">
-                                    {{ userInfo.campusName }}
+                                    {{ campusName || '未填写' }}
                                 </div>
                             </div>
 
@@ -134,10 +158,16 @@ const addUser = async (verifyMessage) => {
                                 </div> -->
                         </div>
 
-                        <div class="btn">
+                        <div class="btn" v-if="userInfo.id !== userStore.userInfo.id">
+                            <van-dialog v-model:show="showApply" title="好友申请" show-cancel-button
+                                confirm-button-text="发送" @confirm="onApply" @cancel="onCancel">
+                                <van-field v-model="message" rows="3" type="textarea" maxlength="150" placeholder="留言"
+                                    show-word-limit />
+                            </van-dialog>
+
                             <div class="follow" v-if="!userInfo.isFriend">
                                 <van-button class="follow-btn" type="primary" round color="#60a5fa"
-                                    @click="addUser">加好友</van-button>
+                                    @click="showApply = true">加好友</van-button>
                             </div>
 
                             <div class="chat" @click.stop="handleClick">

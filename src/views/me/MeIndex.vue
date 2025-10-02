@@ -14,10 +14,19 @@ const userStore = useUserStore()
 
 const socketStore = useSocketStore()
 
+const campusName = ref('')
+
+const campusNames = [
+    { text: '南湖', value: 'NANHU' },
+    { text: '马房山', value: 'MAFANGSHAN' },
+    { text: '余家头', value: 'YUJIATOU' }
+]
+
+
 onMounted(async () => {
     const { data: { data } } = await getUserInfo()
     formModel.value = data
-    console.log(formModel.value.nickname)
+    campusName.value = campusNames.find(item => item.value === data.campusName)['text']
     userStore.setUserInfo({ id: formModel.value.id, nickname: formModel.value.nickname, avatar: formModel.value.avatarUrl })
 })
 
@@ -45,7 +54,7 @@ const Logout = async () => {
                     {{ formModel.nickname || '匿名用户' }}
                 </div>
                 <div class="campus">
-                    {{ formModel.campusName || '未填写' }}
+                    {{ campusName || '未填写' }}
                 </div>
                 <div class="edit">
                     <van-button color="#84b0ed" to="/me/content">编辑资料</van-button>

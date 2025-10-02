@@ -133,6 +133,21 @@ const router = createRouter({
       // 系统通知 互动通知页
       path: '/notice/:type',
       component: () => import('@/views/message/NoticeList.vue')
+    },
+    {
+      // 404
+      path: '/notfound',
+      component: () => import('@/views/404/NotFound.vue')
+    },
+    {
+      // 分享动态
+      path: '/share',
+      component: () => import('@/components/ShareIndex.vue')
+    },
+    {
+      // 好友申请详情页
+      path: '/friends/apply',
+      component: () => import('@/views/friends/FriendApply.vue')
     }
   ],
 })

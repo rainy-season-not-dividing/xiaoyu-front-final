@@ -69,6 +69,16 @@ export const useWebSocketStore = defineStore(
             return totalCnt
         })
 
+        // 系统通知数量
+        const systemCnt = computed(() => {
+            return system.value?.length || 0
+        })
+
+        // 互动通知数量
+        const interactiveCnt = computed(() => {
+            return interactive.value?.length || 0
+        })
+
         // 聊天界面回调函数存储
         const chatCallbacks = new Map()
 
@@ -197,7 +207,7 @@ export const useWebSocketStore = defineStore(
                 console.log('收到WebSocket消息:', payload)
 
                 switch (payload.type) {
-                    case 'notifinpm cation':
+                    case 'notification':
                         handleNotification(payload)
                         break
                     case 'private_message':
@@ -390,6 +400,8 @@ export const useWebSocketStore = defineStore(
             system,
             interactive,
             noticeCnt,
+            systemCnt,
+            interactiveCnt,
 
             // 方法
             sendMessage,

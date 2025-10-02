@@ -7,7 +7,9 @@ import { readNotice } from '@/api/notice'
 import { useSocketStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 
-const { displayList, chatMap } = storeToRefs(useSocketStore())
+const socketStore = useSocketStore()
+
+const { displayList, chatMap } = storeToRefs(socketStore)
 
 const isOpen = ref(false)
 
@@ -91,10 +93,9 @@ const goChat = (friendId, nickname, avatarUrl) => {
         </div>
 
         <van-list v-if="displayList.length">
-            <van-cell-group>
-                <van-swipe-cell v-for="item in displayList" :key="item.from_user_id">
-                    <van-cell v-if="item.type === 'private_message'"
-                        @click="goChat(item.from_user_id, item.from_user_nickname, item.from_user_avatar)">
+            <van-cell-group v-for="item in displayList" :key="item.from_user_id">
+                <van-swipe-cell v-if="item.type === 'private_message'">
+                    <van-cell @click="goChat(item.from_user_id, item.from_user_nickname, item.from_user_avatar)">
                         <template #title>
                             <div class="avatar-nickname">
                                 <img class="custom-image" :src="item.from_user_avatar || defaultAvatar" />
@@ -110,42 +111,7 @@ const goChat = (friendId, nickname, avatarUrl) => {
                             </div>
                         </template>
                     </van-cell>
-                    <van-cell v-else-if="item.notification_type === 'SYSTEM'" @click="router.push('/notice/SYSTEM')">
-                        <template #title>
-                            <div class="sys">
-                                <van-icon name="setting" class="system-icon" />
-                                <div class="text">
-                                    <p class="custom-title">系统消息</p>
-                                    <p class="title">{{ item.title }}</p>
-                                    <p class="custom-last-chat">{{ item.content }}</p>
-                                </div>
-                            </div>
-                        </template>
-                        <template #right-icon>
-                            <div class="un-read" v-if="item.status === 'UNREAD'">
-                                {{ item.count }}
-                            </div>
-                        </template>
-                    </van-cell>
 
-                    <van-cell v-else-if="item.notification_type === 'INTERACTION'"
-                        @click="router.push('/notice/INTERACTION')">
-                        <template #title>
-                            <div class="interaction">
-                                <van-icon name="bell" class="interaction-icon" />
-                                <div class="text">
-                                    <p class="custom-title">互动消息</p>
-                                    <p class="title">{{ item.title }}</p>
-                                    <p class="custom-last-chat">{{ item.content }}</p>
-                                </div>
-                            </div>
-                        </template>
-                        <template #right-icon>
-                            <div class="un-read" v-if="item.status === 'UNREAD'">
-                                {{ item.count }}
-                            </div>
-                        </template>
-                    </van-cell>
                     <template #right>
                         <van-button square text="已读" color="#c4c0c0" class="read-button" @click="read(item.id)"
                             v-if="item.status === 'UNREAD' && item.type === 'private_message'" />
@@ -153,6 +119,40 @@ const goChat = (friendId, nickname, avatarUrl) => {
                             :class="{ 'delete-button-full': item.status === 'READ' }" @click="delChat(item.friendId)" />
                     </template>
                 </van-swipe-cell>
+                <van-cell v-else-if="item.notification_type === 'SYSTEM'" @click="router.push('/notice/system')" center>
+                    <template #title>
+                        <div class="sys">
+                            <van-icon name="setting" class="system-icon" />
+                            <div class="text">
+                                <p class="custom-title">系统消息</p>
+                                <p class="custom-last-chat">{{ item.content }}</p>
+                            </div>
+                        </div>
+                    </template>
+                    <template #right-icon>
+                        <div class="un-read" v-if="socketStore.systemCnt">
+                            {{ socketStore.systemCnt }}
+                        </div>
+                    </template>
+                </van-cell>
+
+                <van-cell v-else-if="item.notification_type === 'INTERACTION'"
+                    @click="router.push('/notice/interaction')" center>
+                    <template #title>
+                        <div class="interaction">
+                            <van-icon name="bell" class="interaction-icon" />
+                            <div class="text">
+                                <p class="custom-title">互动消息</p>
+                                <p class="custom-last-chat">{{ item.content }}</p>
+                            </div>
+                        </div>
+                    </template>
+                    <template #right-icon>
+                        <div class="un-read" v-if="socketStore.interactiveCnt">
+                            {{ socketStore.interactiveCnt }}
+                        </div>
+                    </template>
+                </van-cell>
             </van-cell-group>
         </van-list>
         <van-empty v-else />
@@ -336,12 +336,13 @@ const goChat = (friendId, nickname, avatarUrl) => {
 
         p {
             margin: 0;
+            padding: 0;
         }
 
         .custom-title,
         .custom-last-chat {
             margin-left: 10px;
-            font-size: 16px;
+            font-size: 14px;
         }
 
         .custom-last-chat {

@@ -31,12 +31,30 @@ const showNew = ref(false)
 const handleNewMessage = (message) => {
     // 只处理来自当前聊天对象的消息
     if (message.from_user_id === parseInt(friendId)) {
-        chatRecord.value.push({
-            "fromId": message.from_user_id,
-            "toId": userStore.userInfo.id,
-            "content": message.content,
-            "createdAt": message.created_at
-        })
+        if (message.ref_type === 'TEXT') {
+            chatRecord.value.push({
+                "ref_type": 'TEXT',
+                "fromId": message.from_user_id,
+                "toId": userStore.userInfo.id,
+                "content": message.content,
+                "createdAt": message.created_at
+            })
+        } else {
+            chatRecord.value.push({
+                "ref_type": message.ref_type,
+                "itemId": message.forward_item_id,
+                "fromId": message.from_user_id,
+                "toId": userStore.userInfo.id,
+                "createdAt": message.created_at,
+                "id": message.forward_item_info.id,
+                "title": message.forward_item_info.title,
+                "content": message.forward_item_info.content_preview,
+                "file": message.forward_item_info.preview_file_url,
+                "authorNickname": message.forward_item_info.author_nickname,
+                "authorAvatar": message.forward_item_info.author_avatar_url
+            })
+        }
+
         if (!isScrolledToBottom([
             document.querySelector('.container'),
             document.querySelector('.van-pull-refresh__track'),
@@ -69,7 +87,30 @@ onMounted(async () => {
         size: size.value,
         friendId: friendId
     })
+
+    data.list = data.list.map(item => {
+        const obj = JSON.parse(item.content)
+        if (obj.type === 'TEXT') {
+            item.content = obj.text
+            item.ref_type = obj.type
+            return item
+        } else {
+            return {
+                ...item,
+                ref_type: obj.type,
+                itemId: obj.itemId,
+                title: obj.title,
+                content: obj.content,
+                file: obj.files[0]?.url || '',
+                id: obj.id,
+                authorNickname: obj.author.nickname,
+                authorAvatar: obj.author.avatarUrl
+            }
+        }
+    })
+
     chatRecord.value = data.list.slice().reverse()
+
 
     nextTick(() => {
         setTimeout(() => {
@@ -129,12 +170,14 @@ const publish = async () => {
     }
     socketStore.sendMessage(friendId, content.value)
     chatRecord.value.push({
+        "ref_type": 'TEXT',
         'fromId': userStore.userInfo.id,
         'toId': friendId,
         'content': content.value,
         'createdAt': new Date().toISOString()
     })
     chatMap.value.set(parseInt(friendId), {
+        ref_type: 'TEXT',
         type: 'private_message',
         from_user_id: parseInt(friendId),
         from_user_nickname: nickname,
@@ -196,7 +239,41 @@ const handleNew = () => {
                     </div>
 
                     <div class="content">
-                        <div class="text">{{ item.content }}</div>
+                        <div class="text" v-if="item.ref_type === 'TEXT'">{{ item.content }}</div>
+                        <div class="share" v-else-if="item.ref_type === 'POST'"
+                            @click="router.push(`/posts/detail/${item.itemId}`)">
+                            <div class="post-container">
+                                <strong class="share-type">分享动态</strong>
+                                <div class="user-info">
+                                    <div class="share-avatar">
+                                        <img :src="item.authorAvatar || defaultAvatar" class="share-avatar-image" />
+                                    </div>
+                                    <div class="share-author">{{ item.authorNickname }}</div>
+                                </div>
+                                <div class="share-title">{{ item.title }}</div>
+                                <div class="share-content">{{ item.content }}</div>
+                                <div class="share-file" v-if="item.file">
+                                    <img :src="item.file" class="share-file-image" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="share" v-else-if="item.ref_type === 'TASK'"
+                            @click="router.push(`/task/detail/${item.itemId}`)">
+                            <div class="task-container">
+                                <strong class="share-type">分享任务</strong>
+                                <div class="user-info">
+                                    <div class="share-avatar">
+                                        <img :src="item.authorAvatar || defaultAvatar" class="share-avatar-image" />
+                                    </div>
+                                    <div class="share-author">{{ item.authorNickname }}</div>
+                                </div>
+                                <div class="share-title">{{ item.title }}</div>
+                                <div class="share-content">{{ item.content }}</div>
+                                <div class="share-file" v-if="item.file">
+                                    <img :src="item.file" class="share-file-image" />
+                                </div>
+                            </div>
+                        </div>
                         <div class="time">
                             {{ timeAgo(item.createdAt) }}
                         </div>
@@ -325,13 +402,63 @@ const handleNew = () => {
 
             margin: 5px 10px;
 
-            .text {
+            .text,
+            .share {
                 padding: 10px 15px;
                 border-radius: 10px;
                 word-wrap: break-word; // 优先保持单词完整性
                 word-break: break-all; // 必要时可以在任何字符间换行
                 max-width: 100%;
                 font-size: 16px;
+
+                .post-container,
+                .task-container {
+                    padding: 20px;
+                    background-color: white;
+                    border-radius: 20px;
+
+                    .share-type {
+                        font-size: 16px;
+                        margin-bottom: 5px;
+                    }
+
+                    .user-info {
+                        display: flex;
+                        margin-top: 10px;
+                        margin-bottom: 10px;
+                        align-items: center;
+
+                        .share-avatar-image {
+                            width: 30px;
+                            height: 30px;
+                            object-fit: cover;
+                            border-radius: 50%;
+                            margin-right: 10px;
+                        }
+
+                        .share-author {
+                            font-size: 14px;
+                            font-weight: bold;
+                        }
+                    }
+                }
+
+                .share-title {
+                    font-size: 16px;
+                    font-weight: bold;
+                }
+
+                .share-content {
+                    font-size: 12px;
+                }
+
+                .share-file-image {
+                    width: 150px;
+                    height: 150px;
+                    border-radius: 10px;
+                    object-fit: cover;
+                    margin-top: 5px;
+                }
             }
 
             .time {
@@ -348,7 +475,9 @@ const handleNew = () => {
         &.other {
 
             .content {
-                .text {
+
+                .text,
+                .share {
                     background-color: #f0f0f0;
                     border-top-left-radius: 0;
                 }
@@ -362,7 +491,8 @@ const handleNew = () => {
 
             .content {
 
-                .text {
+                .text,
+                .share {
                     background-color: #60a5fa;
                     color: white;
                     border-top-right-radius: 0px;

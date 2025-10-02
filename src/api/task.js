@@ -116,3 +116,10 @@ export const cancelTaskOrder = (task_id) => {
 export const finishTaskOrder = (task_id) => {
     return request.put(`/api/task_orders/${task_id}/finish`)
 }
+
+// 转发任务
+export const shareTask = (task_id,shareUserIds) => {
+    return request.post(`/api/tasks/${task_id}/share`, {
+        shareUserIds
+    })
+}

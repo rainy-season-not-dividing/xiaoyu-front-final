@@ -22,10 +22,20 @@ export const getChatRecord = ({ page, size, friendId }) => {
     })
 }
 
-// 好友申请
-export const applyFriend = (friendId,message) => {
-    return request.post('/api/friends/request', {
+// 发送好友申请
+export const sendFriendApply = (friendId, message) => {
+    return request.post(`/api/friends/request`, {
         friendId,
         message
     })
+}
+
+// 接受好友申请
+export const acceptFriend = (friendId) => {
+    return request.put(`/api/friends/${friendId}/accept`)
+}
+
+// 拒绝好友申请
+export const rejectFriend = (friendId) => {
+    return request.put(`/api/friends/${friendId}/refuse`)
 }

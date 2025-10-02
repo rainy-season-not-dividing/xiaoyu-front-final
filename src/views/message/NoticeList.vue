@@ -4,6 +4,7 @@ import { getNoticeList } from '@/api/notice'
 import { useRoute, useRouter } from 'vue-router'
 import defaultAvatar from '@/assets/image/default.png'
 import { timeAgo } from '@/utils/timeFormat'
+import { readNotice } from '@/api/notice'
 
 const route = useRoute()
 const router = useRouter()
@@ -11,24 +12,7 @@ const type = ref(route.params.type)
 
 const page = ref(1)
 const size = ref(10)
-const noticeList = ref([
-    {
-        "id": 7001,
-        "type": "LIKE",
-        "title": "您的动态收到了新的赞",
-        "content": "用户昵称 赞了您的动态 “今天天气真好”",
-        "ref_id": 2001,
-        "ref_type": "POST",
-        "status": "UNREAD",
-        "createdAt": "2023-01-01T00:00:00Z",
-        "fromUser": { // 如果是用户互动类通知，可包含来源用户信息
-            "id": 1002,
-            "nickname": "用户昵称",
-            "avatarUrl": ""
-        },
-        "count": 1
-    }
-])
+const noticeList = ref([])
 
 // onMounted(async () => {
 //     const { data: { data } } = await getNoticeList(type.value, page.value, size.value)
@@ -40,25 +24,25 @@ const finished = ref(false);
 const refreshing = ref(false);
 
 const onLoad = async () => {
-    // if (refreshing.value) {
-    //     noticeList.value = []
-    //     refreshing.value = false
-    //     page.value = 1
-    // }
+    if (refreshing.value) {
+        noticeList.value = []
+        refreshing.value = false
+        page.value = 1
+    }
 
-    // const { data: { data } } = await getNoticeList(type.value, page.value, size.value)
-    // if (page.value === 1) {
-    //     noticeList.value = data.list
-    // } else {
-    //     noticeList.value.push(...data.list)
-    // }
+    const { data: { data } } = await getNoticeList(type.value, page.value, size.value)
+    if (page.value === 1) {
+        noticeList.value = data.list
+    } else {
+        noticeList.value.push(...data.list)
+    }
 
-    // loading.value = false
-    // ++page.value
+    loading.value = false
+    ++page.value
 
-    // if (list.value.length >= data.pagination.total) {
-    //     finished.value = true
-    // }
+    if (noticeList.value.length >= data.pagination.total) {
+        finished.value = true
+    }
 }
 
 const onRefresh = () => {
@@ -83,10 +67,26 @@ const findValueById = (targetId) => {
     return noticeList.value.find(item => item.id === targetId)
 }
 const read = async (notificationId) => {
-    // await readNotice(notificationId)
+    await readNotice(notificationId)
     const value = findValueById(notificationId)
     if (value) {
         value.status = 'READ'
+    }
+}
+
+const handleClick = (item) => {
+    console.log(item)
+    if (item.refType === 'CHAT') {
+        router.push({
+            path: '/friends/apply',
+            query: {
+                id: item.fromUser.id,
+                nickname: item.fromUser.nickname,
+                avatarUrl: encodeURIComponent(item.fromUser.avatarUrl),
+                campusName: item.fromUser.campusName,
+                verifyMessage: item.content
+            }
+        })
     }
 }
 </script>
@@ -97,7 +97,7 @@ const read = async (notificationId) => {
     <van-pull-refresh v-model="refreshing" @refresh="onRefresh">
         <van-list v-model:loading="loading" :finished="finished" finished-text="没有更多了" @load="onLoad">
             <van-swipe-cell v-for="item in noticeList" :key="item.id">
-                <van-cell center>
+                <van-cell center @click="handleClick(item)">
                     <template #title>
                         <div class="container">
                             <div class="avatar" v-if="item.fromUser">

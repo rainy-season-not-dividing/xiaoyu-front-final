@@ -1,6 +1,7 @@
-import axios from "axios";
-import { useUserStore } from "@/stores";
-import { showLoadingToast, closeToast, showFailToast } from 'vant';
+import axios from "axios"
+import { useUserStore } from "@/stores"
+import { showLoadingToast, closeToast, showFailToast } from 'vant'
+import router from "@/router"
 
 const request = axios.create({
     headers: {
@@ -42,6 +43,11 @@ request.interceptors.response.use(function (response) {
 }, function (error) {
     // 超出 2xx 范围的状态码都会触发该函数。
     // 对响应错误做点什么
+    closeToast()
+    if (error.response.status === 404) {
+        router.push('/notfound')
+        return Promise.reject(error)
+    }
     showFailToast(error.response.data.msg)
     return Promise.reject(error);
 })
