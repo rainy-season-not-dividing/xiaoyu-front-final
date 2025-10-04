@@ -41,11 +41,13 @@ onMounted(async () => {
         // 处理文件回显
         if (data.files && data.files.length > 0) {
             // 用于存储信息
-            form.value.files.value = data.files.map(file => file.fileUrl)
+            form.value.files = data.files.map(file => file.fileUrl)
             // 用于预览
-            fileList.value = data.files.map(file => ({
-                url: file.fileUrl  // 用于预览的图片链接
-            }))
+            fileList.value = form.value.files.map(file => {
+                return {
+                    url: file  // 用于预览的图片链接
+                }
+            })
         }
     }
 })
@@ -152,6 +154,7 @@ const handleRead = async (file) => {
     fd.append('file', file.file)
     const { data: { data } } = await uploadFile(fd)
     form.value.files.push(data)
+    console.log(form.value.files)
 }
 
 const handleDelete = (file, detail) => {
@@ -172,12 +175,10 @@ const handleDelete = (file, detail) => {
 
 const onSubmit = async () => {
     if (isEdit.value) {
-        console.log("调用的update接口")
         await updatePost(route.params.id, form.value)
         await router.back()
         showSuccessToast('保存成功')
     } else {
-        console.log("调用的publish接口")
         await publishPost(form.value)
         await router.push('/')
         showSuccessToast('发布成功')

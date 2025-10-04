@@ -81,7 +81,7 @@ const showShare = ref(false)
   <div class="task">
     <div class="publisher-info">
       <!-- 发布者信息栏 -->
-      <div class="avatar-and-name">
+      <div class="avatar-and-name" @click="router.push(`/user/${form.publisherId}`)">
         <!-- 发布者信息 -->
         <!-- 头像 -->
         <img :src="form.avatarUrl || defaultAvatar" class="avatar-flex">

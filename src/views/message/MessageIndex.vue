@@ -1,6 +1,6 @@
 <script setup>
 import { useRouter } from 'vue-router';
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import defaultAvatar from '@/assets/image/default.png'
 import { getFriendsList } from '@/api/friends'
 import { readNotice } from '@/api/notice'
@@ -9,7 +9,67 @@ import { storeToRefs } from 'pinia'
 
 const socketStore = useSocketStore()
 
-const { displayList, chatMap } = storeToRefs(socketStore)
+const { displayList, system, interactive, chatMap } = storeToRefs(socketStore)
+
+// 监听displayList变化，自动保存到本地
+watch(
+    displayList,
+    (newDisplayList) => {
+        if (window.android && typeof window.android.saveDisplayListToLocal === 'function') {
+            try {
+                // 将displayList转为JSON字符串（原生仅支持基本类型参数）
+                const displayListStr = JSON.stringify(newDisplayList)
+                // 调用原生方法保存
+                window.android.saveDisplayListToLocal(displayListStr)
+            } catch (e) {
+                console.error('保存展示列表到本地失败：', e)
+            }
+        }
+    },
+    { deep: true }
+    // { immediate: true } // 初始化时立即保存一次（避免首次进入无数据）
+)
+
+// 页面加载时，读取本地displayList并恢复页面数据
+onMounted(() => {
+    console.log('读取本地展示列表...')
+    if (window.android && typeof window.android.readDisplayListFromLocal === 'function') {
+        try {
+            const savedDisplayListStr = window.android.readDisplayListFromLocal()
+            console.log('读取本地展示列表成功：', savedDisplayListStr)
+            if (savedDisplayListStr) {
+                const savedDisplayList = JSON.parse(savedDisplayListStr)
+                // 恢复数据到页面（关键：需根据你的数据结构反向解析）
+                restoreDisplayList(savedDisplayList)
+                console.log('展示列表恢复成功：', displayList)
+            }
+        } catch (e) {
+            console.error('读取本地展示列表失败：', e)
+        }
+    } else {
+        console.log('没有进行操作')
+    }
+})
+
+// 恢复展示列表数据到原始数据源（需根据你的消息格式调整）
+const restoreDisplayList = (savedList) => {
+    // 使用 Vue 可追踪的方式清空数据
+    system.value.splice(0, system.value.length)
+    interactive.value.splice(0, interactive.value.length)
+    chatMap.value.clear()
+
+    // 遍历保存的列表，分别对应到system、interactive、chatMap
+    savedList.forEach(item => {
+        if (item.type === 'private_message') {
+            chatMap.value.set(item.from_user_id, item)
+        }
+        if (item.notification_type === 'system') {
+            system.value = [item] // 保存最新一条
+        } else if (item.notification_type === 'interactive') {
+            interactive.value = [item] // 保存最新一条
+        }
+    })
+}
 
 const isOpen = ref(false)
 
@@ -45,8 +105,7 @@ const read = async (notificationId) => {
 }
 
 const actions = [
-    { text: '添加好友', path: '/search/user' },
-    { text: '新朋友' }
+    { text: '添加好友', path: '/search/user' }
 ]
 const onSelect = (action) => {
     if (action.path) {

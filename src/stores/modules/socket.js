@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 
 // 配置常量
 const MAX_MESSAGES = 100 // 最大消息数量限制
-const WEBSOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'ws://localhost:8080/ws/messages'
+const WEBSOCKET_URL = 'ws://10.78.156.50:8080/api/ws/messages'
 const RECONNECT_DELAY = 2000
 const MAX_RECONNECT_ATTEMPTS = 5
 const HEARTBEAT_INTERVAL = 30000 // 30秒心跳

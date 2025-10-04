@@ -31,6 +31,13 @@ export const updateUerInfo = (fd) => {
     return request.put('/api/users/profile', fd)
 }
 
+// 拉黑用户
+export const addBlack = (targetId) => {
+    return request.post('/api/users/blacklist', {
+        targetId
+    })
+}
+
 // 获取黑名单列表
 export const getBlackList = (page, size) => {
     return request.get('/api/users/blacklist', {

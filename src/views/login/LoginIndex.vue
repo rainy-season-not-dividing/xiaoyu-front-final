@@ -33,14 +33,24 @@ const Login = async () => {
 const validator = (val) => val === password.value
 
 const Register = async () => {
-    await register(account.value, password.value)
+    const { data: { data } } = await register(account.value, password.value)
+    userStore.setToken(data.accessToken)
+    userStore.setUserInfo({ id: data.user.id, nickname: data.user.nickname, avatar: data.user.avatarUrl })
     showSuccessToast('注册成功')
+    account.value = ''
+    password.value = ''
+    repassword.value = ''
+    const url = route.query.backUrl || '/'
+    router.replace(url)
+}
+
+const handleClick = () => {
     showRigister.value = false
+    showLogin.value = false
     account.value = ''
     password.value = ''
     repassword.value = ''
 }
-
 </script>
 
 <template>
@@ -66,8 +76,7 @@ const Register = async () => {
                         <van-button round block type="primary" native-type="submit" class="submit-btn">
                             登录
                         </van-button>
-                        <van-button round block type="primary" @click="showLogin = false" class="cancle-btn"
-                            color="white">
+                        <van-button round block type="primary" @click="handleClick" class="cancle-btn" color="white">
                             取消
                         </van-button>
                     </div>
@@ -87,8 +96,7 @@ const Register = async () => {
                         <van-button round block type="primary" native-type="submit" class="submit-btn">
                             注册
                         </van-button>
-                        <van-button round block type="primary" @click="showRigister = false" class="cancle-btn"
-                            color="white">
+                        <van-button round block type="primary" @click="handleClick" class="cancle-btn" color="white">
                             取消
                         </van-button>
                     </div>

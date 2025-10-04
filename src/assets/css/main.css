@@ -1,10 +1,24 @@
 * {
   box-sizing: border-box;
 }
+
 body {
   margin: 0;
   background-color: #fafafc;
 }
+
 .van-nav-bar__arrow {
   color: #bdbdbd !important;
+}
+
+.van-list {
+  margin-bottom: 60px !important;
+}
+
+.van-list__finished-text {
+  margin-bottom: 60px !important;
+}
+
+.van-list__loading {
+  margin-bottom: 60px !important;
 }

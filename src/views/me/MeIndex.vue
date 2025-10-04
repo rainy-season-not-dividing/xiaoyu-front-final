@@ -24,10 +24,13 @@ const campusNames = [
 
 
 onMounted(async () => {
-    const { data: { data } } = await getUserInfo()
-    formModel.value = data
-    campusName.value = campusNames.find(item => item.value === data.campusName)['text']
-    userStore.setUserInfo({ id: formModel.value.id, nickname: formModel.value.nickname, avatar: formModel.value.avatarUrl })
+    if (userStore.token) {
+        const { data: { data } } = await getUserInfo()
+        formModel.value = data
+        campusName.value = campusNames.find(item => item.value === data.campusName)['text']
+        userStore.setUserInfo({ id: formModel.value.id, nickname: formModel.value.nickname, avatar: formModel.value.avatarUrl })
+    }
+
 })
 
 const Logout = async () => {
@@ -217,6 +220,7 @@ const Logout = async () => {
     display: flex;
     flex-direction: column;
     align-items: center;
+    margin-top: 150px;
 
     p {
         margin-top: 10px;

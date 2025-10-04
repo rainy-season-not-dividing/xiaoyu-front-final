@@ -63,7 +63,7 @@ onMounted(async () => {
     const { data: { data } } = await getPostDetail(postId)
     post.value = data
 
-    shareCnt.value = post.stats.shareCnt
+    shareCnt.value = post.value.stats.shareCnt
 
     // const { data: { data: d1 } } = await getCommentList(route.params.id, { page: commentPage.value, size: commentSize.value })
     // commentList.value = d1.list
@@ -109,11 +109,11 @@ const like = async () => {
     if (post.value.userActions.isLiked) {
         const { data: { data } } = await cancelLikePost(postId)
         post.value.userActions.isLiked = false
-        post.value.stats.likeCnt = data.likeCnt
+        post.value.stats.likeCnt = data.like_cnt
     } else {
         const { data: { data } } = await likePost(postId)
         post.value.userActions.isLiked = true
-        post.value.stats.likeCnt = data.likeCnt
+        post.value.stats.likeCnt = data.like_cnt
     }
 }
 
@@ -262,7 +262,7 @@ const deleteUserComment = async (commentId, type, parentId) => {
 
     <van-pull-refresh v-model="refreshing" @refresh="onRefresh">
         <div class="post">
-            <div class="user-info">
+            <div class="user-info" @click="router.push(`/user/${post.user.id}`)">
                 <div class="avatar">
                     <img :src="post?.user?.avatarUrl || defaultAvatar" class="avatar-image" />
                 </div>
@@ -326,7 +326,7 @@ const deleteUserComment = async (commentId, type, parentId) => {
                             <div class="text">
                                 <van-icon name="chat-o" />
                                 <span class="comment-text" v-if="post?.stats?.commentCnt">{{ post.stats.commentCnt
-                                    }}</span>
+                                }}</span>
                             </div>
                         </div>
                     </div>
@@ -396,7 +396,7 @@ const deleteUserComment = async (commentId, type, parentId) => {
             <van-list v-model:loading="commentLoading" :finished="commentFinished" finished-text="没有更多了" @load="onLoad">
                 <div class="comment-list" v-if="commentList">
                     <div v-for="comment in commentList" :key="comment.id" class="comment-item">
-                        <div class="comment-user">
+                        <div class="comment-user" @click="router.push(`/user/${comment.user.id}`)">
                             <img round :src="comment?.user?.avatarUrl || defaultAvatar" class="comment-avatar" />
                             <span class="comment-nickname">{{ comment?.user?.nickname }}</span>
                         </div>
@@ -438,10 +438,10 @@ const deleteUserComment = async (commentId, type, parentId) => {
 
                         <div class="second-comment" v-if="comment.replies.length">
                             <div class="second-comment-line" v-for="reply in comment.replies" :key="reply.id">
-                                <div class="comment-user">
+                                <div class="comment-user" @click="router.push(`/user/${reply.user.id}`)">
                                     <img round :src="reply.user.avatarUrl || defaultAvatar" class="comment-avatar" />
                                     <span class="comment-nickname">{{ reply.user.nickname
-                                        }}</span>
+                                    }}</span>
                                 </div>
 
                                 <div class="comment-content">
@@ -675,6 +675,10 @@ const deleteUserComment = async (commentId, type, parentId) => {
     .like-comment,
     .collection-share {
         display: flex;
+    }
+
+    .share-text {
+        font-size: 14px;
     }
 
     .likes,

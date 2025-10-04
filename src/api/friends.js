@@ -39,3 +39,8 @@ export const acceptFriend = (friendId) => {
 export const rejectFriend = (friendId) => {
     return request.put(`/api/friends/${friendId}/refuse`)
 }
+
+// 删除好友
+export const deleteFriend = (friendId) => {
+    return request.delete(`/api/friends/${friendId}`)
+}

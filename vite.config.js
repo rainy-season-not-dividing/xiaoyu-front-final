@@ -10,6 +10,13 @@ import { VantResolver } from '@vant/auto-import-resolver';
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: './',          // 关键：用相对路径
+  build: {
+    outDir: 'dist'     // 默认即可
+  },
+
+
+
   plugins: [
     vue(),
     vueDevTools(),
@@ -40,8 +47,7 @@ export default defineConfig({
     proxy: {
       '/api': {
         target: 'http://localhost:8080',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '')
+        changeOrigin: true
       }
     }
   }

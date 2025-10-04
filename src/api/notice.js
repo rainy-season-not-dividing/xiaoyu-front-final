@@ -15,3 +15,8 @@ export const getNoticeList = (type, page, size) => {
 export const readNotice = (notification_id) => {
     return request.put(`/api/notifications/${notification_id}/read`)
 }
+
+// 删除通知
+export const delNotice = (notification_id) => {
+    return request.delete(`/api/notifications/${notification_id}`)
+}

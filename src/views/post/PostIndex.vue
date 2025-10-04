@@ -111,10 +111,10 @@ const share = async (postId) => {
                         </div>
                     </div>
 
-                    <div class="view-cnt" v-if="item.stats.viewCnt" @click="router.push(`/posts/detail/${item.id}`)">
+                    <!-- <div class="view-cnt" v-if="item.stats.viewCnt" @click="router.push(`/posts/detail/${item.id}`)">
                         <van-icon name="eye-o" class="view-icon" />
                         <span class="view-cnt-text">{{ item.stats.viewCnt }}</span>
-                    </div>
+                    </div> -->
                 </div>
 
                 <div class="content-container" @click="router.push(`/posts/detail/${item.id}`)">

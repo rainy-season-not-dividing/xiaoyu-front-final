@@ -54,7 +54,8 @@ const onRefresh = () => {
     onLoad()
 }
 
-const del = (targetId) => {
+const del = async (targetId) => {
+    await delNotice(targetId)
     for (const index in noticeList.value) {
         if (noticeList.value[index].id === targetId) {
             noticeList.value.splice(index, 1)

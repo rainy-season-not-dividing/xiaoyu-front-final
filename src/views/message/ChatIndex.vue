@@ -234,8 +234,13 @@ const handleNew = () => {
             <div class="container">
                 <div class="item" v-for="item in chatRecord" :key="item.id"
                     :class="{ 'self': item.fromId === userStore.userInfo.id, 'other': item.fromId !== userStore.userInfo.id }">
-                    <div class="avatar">
+
+                    <div v-if="item.fromId !== userStore.userInfo.id" class="avatar"
+                        @click="router.push(`/user/${friendId}`)">
                         <img :src="friendAvatarUrl || defaultAvatar" class="avatar-image" />
+                    </div>
+                    <div v-else class="avatar" @click="router.push(`/user/${userStore.userInfo.id}`)">
+                        <img :src="userStore.userInfo.avatar || defaultAvatar" class="avatar-image" />
                     </div>
 
                     <div class="content">
@@ -411,6 +416,8 @@ const handleNew = () => {
                 max-width: 100%;
                 font-size: 16px;
 
+                color: black;
+
                 .post-container,
                 .task-container {
                     padding: 20px;
@@ -496,6 +503,11 @@ const handleNew = () => {
                     background-color: #60a5fa;
                     color: white;
                     border-top-right-radius: 0px;
+                }
+
+                .share {
+                    text-align: left;
+                    color: black;
                 }
             }
         }

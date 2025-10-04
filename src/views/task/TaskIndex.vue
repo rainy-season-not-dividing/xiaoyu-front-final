@@ -46,8 +46,8 @@ const getTasks = async (status, keyword) => {
 
 onMounted(async () => {
     const { data: { data } } = await getAllTaskTag()
-    taskTags.value = data.list
-    await getTasks('', '')
+    taskTags.value = data
+    // await getTasks('', '')
 })
 
 
@@ -60,6 +60,40 @@ const selectTag = async (id) => {
 const take = async (taskId) => {
     await takeTask(taskId)
     await getTasks('', '')
+}
+
+const loading = ref(false)
+const finished = ref(false)
+const refreshing = ref(false)
+
+const onLoad = async () => {
+    if (refreshing.value) {
+        taskList.value = []
+        page.value = 1
+        refreshing.value = false
+    }
+
+    const { data: { data } } = await getTaskList({ page: page.value, size: size.value, tag_id: selectedTagId.value, status: status, keyword: keyword })
+
+    if (page.value === 1) {
+        taskList.value = data.list
+    } else {
+        taskList.value.push(...data.list)
+    }
+
+    loading.value = false
+
+    ++page.value
+
+    if (taskList.value.length >= data.pagination.total) {
+        finished.value = true
+    }
+}
+
+const onRefresh = () => {
+    finished.value = false
+    loading.value = true
+    onLoad()
 }
 </script>
 
@@ -87,7 +121,8 @@ const take = async (taskId) => {
     </div>
 
     <van-pull-refresh v-model="refreshing" @refresh="onRefresh">
-        <van-list v-model:loading="loading" :finished="finished" finished-text="没有更多了" @load="onLoad" v-if="taskList[0].id">
+        <van-list v-model:loading="loading" :finished="finished" finished-text="没有更多了" @load="onLoad"
+            v-if="taskList[0].id">
             <van-cell v-for="item in taskList" :key="item.id" @click="router.push(`/task/detail/${item.id}`)">
                 <div class="top">
                     <div class="tags">

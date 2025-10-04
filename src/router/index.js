@@ -1,11 +1,11 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory, createWebHashHistory } from 'vue-router'
 import LoginIndex from '@/views/login/LoginIndex.vue'
 import LayoutIndex from '@/views/layout/LayoutIndex.vue'
 import PostIndex from '@/views/post/PostIndex.vue'
 import { useUserStore } from '@/stores'
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHashHistory(import.meta.env.BASE_URL),
   routes: [
     {
       // 登录
@@ -171,7 +171,7 @@ const authPagePrefixes = [
   '/me/content'
 ]
 
-/* router.beforeEach((to) => {
+router.beforeEach((to) => {
   const userStore = useUserStore()
 
   // 检查是否需要认证
@@ -189,6 +189,6 @@ const authPagePrefixes = [
 
   // 认证通过
   return true
-}) */
+})
 
 export default router

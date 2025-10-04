@@ -1,11 +1,11 @@
 <script setup>
-import { getUserDetail } from "@/api/user"
+import { getUserDetail, addBlack, delBlack } from "@/api/user"
 import { getUserPostList } from "@/api/posts"
-import { ref, onMounted } from "vue"
+import { ref, onMounted, watch } from "vue"
 import { useRoute, useRouter } from "vue-router"
 import defaultAvatar from '@/assets/image/default.png'
 import { timeAgo } from "@/utils/timeFormat"
-import { sendFriendApply } from "@/api/friends"
+import { sendFriendApply, deleteFriend } from "@/api/friends"
 import { useUserStore } from "@/stores"
 
 const userStore = useUserStore()
@@ -27,7 +27,6 @@ const campusNames = [
 onMounted(async () => {
     const { data: { data } } = await getUserDetail(route.params.id)
     userInfo.value = data
-    console.log(data)
     campusName.value = campusNames.find(item => item.value === data.campusName)['text']
     title.value = `${userInfo.value.nickname}的主页`
 })
@@ -84,7 +83,6 @@ const onRefresh = () => {
 }
 
 const handleClick = () => {
-    console.log('handleClick')
     router.push({
         path: '/chat',
         query: {
@@ -109,10 +107,48 @@ const onCancel = () => {
     showApply.value = false
     message.value = ''
 }
+
+const showPopover = ref(false)
+
+const actions = [
+    { text: '拉黑' }
+]
+
+watch(() => userInfo.value.isBlack, (newVal) => {
+    actions[0].text = newVal ? '取消拉黑' : '拉黑'
+})
+
+const onSelect = async (action) => {
+    if (action.text === '拉黑') {
+        await addBlack(route.params.id)
+        userInfo.value.isBlack = true
+        showSuccessToast('已拉黑')
+    } else {
+
+        await delBlack(route.params.id)
+        userInfo.value.isBlack = false
+        showSuccessToast('已取消拉黑')
+    }
+}
+
+const delFriend = async () => {
+    await deleteFriend(route.params.id)
+    showSuccessToast('删除成功')
+}
 </script>
 
 <template>
-    <van-nav-bar :title="title" left-arrow fixed @click-left="router.back()" />
+    <van-nav-bar :title="title" left-arrow fixed @click-left="router.back()">
+        <template #right>
+            <van-popover v-model:show="showPopover" :actions="actions" @select="onSelect" placement="bottom-end">
+                <template #reference>
+                    <van-icon name="ellipsis" />
+                </template>
+            </van-popover>
+        </template>
+    </van-nav-bar>
+
+
 
     <div class="info">
         <van-pull-refresh v-model="refreshing" @refresh="onRefresh">
@@ -165,12 +201,19 @@ const onCancel = () => {
                                     show-word-limit />
                             </van-dialog>
 
-                            <div class="follow" v-if="!userInfo.isFriend">
+                            <div class="follow" v-if="userInfo.id !== userStore.userInfo.id && !userInfo.isFriend">
                                 <van-button class="follow-btn" type="primary" round color="#60a5fa"
                                     @click="showApply = true">加好友</van-button>
                             </div>
 
-                            <div class="chat" @click.stop="handleClick">
+                            <div class="del-friend"
+                                v-else-if="userInfo.id !== userStore.userInfo.id && userInfo.isFriend">
+                                <van-button class="del-friend-btn" type="primary" round color="#f56c6c"
+                                    @click="delFriend">删除好友</van-button>
+                            </div>
+
+                            <div class="chat" @click.stop="handleClick"
+                                v-if="userInfo.id !== userStore.userInfo.id && userInfo.isFriend">
                                 <van-button class="chat-btn" type="primary" round color="white">
                                     <van-icon name="guide-o" />
                                     <span class="text">私信</span>
@@ -315,10 +358,15 @@ const onCancel = () => {
         top: 150px;
 
         .follow-btn,
-        .chat-btn {
+        .chat-btn,
+        .del-friend-btn {
             width: 68px;
             height: 20px;
             font-size: 12px;
+        }
+
+        .del-friend-btn {
+            width: 80px;
         }
 
         .chat-btn {
