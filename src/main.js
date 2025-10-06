@@ -41,7 +41,27 @@ watch(
     { immediate: true },
 )
 
-const { latest } = storeToRefs(socketStore)
+const { latest, displayList } = storeToRefs(socketStore)
+
+// 监听displayList变化，自动保存到本地
+watch(
+    displayList,
+    (newDisplayList) => {
+        if (newDisplayList.length && window.android && typeof window.android.saveDisplayListToLocal === 'function') {
+            try {
+                // 将displayList转为JSON字符串（原生仅支持基本类型参数）
+                const displayListStr = JSON.stringify(newDisplayList)
+                // 调用原生方法保存
+                window.android.saveDisplayListToLocal(displayListStr)
+            } catch (e) {
+                console.error('保存展示列表到本地失败：', e)
+            }
+        } else {
+            console.log('没有展示列表数据，不保存到本地')
+        }
+    },
+    { deep: true }
+)
 
 router.isReady().then(() => {
     router.afterEach(() => {

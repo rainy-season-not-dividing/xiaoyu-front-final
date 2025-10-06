@@ -40,14 +40,14 @@ const taskList = ref([
 ])
 
 const getTasks = async (status, keyword) => {
-    const { data: { data } } = await getTaskList({ page: page.value, size: size.value, tag_id: selectedTagId.value, status: status, keyword: keyword })
+    const { data: { data } } = await getTaskList({ page: page.value, size: size.value, tagId: selectedTagId.value, status: status, keyword: keyword })
     taskList.value = data.list
 }
 
 onMounted(async () => {
     const { data: { data } } = await getAllTaskTag()
     taskTags.value = data
-    // await getTasks('', '')
+    await getTasks('', '')
 })
 
 
@@ -66,14 +66,14 @@ const loading = ref(false)
 const finished = ref(false)
 const refreshing = ref(false)
 
-const onLoad = async () => {
+const onLoad = async (status, keyword) => {
     if (refreshing.value) {
         taskList.value = []
         page.value = 1
         refreshing.value = false
     }
 
-    const { data: { data } } = await getTaskList({ page: page.value, size: size.value, tag_id: selectedTagId.value, status: status, keyword: keyword })
+    const { data: { data } } = await getTaskList({ page: page.value, size: size.value, tagId: selectedTagId.value, status, keyword })
 
     if (page.value === 1) {
         taskList.value = data.list
@@ -122,7 +122,7 @@ const onRefresh = () => {
 
     <van-pull-refresh v-model="refreshing" @refresh="onRefresh">
         <van-list v-model:loading="loading" :finished="finished" finished-text="没有更多了" @load="onLoad"
-            v-if="taskList[0].id">
+            v-if="taskList.length">
             <van-cell v-for="item in taskList" :key="item.id" @click="router.push(`/task/detail/${item.id}`)">
                 <div class="top">
                     <div class="tags">
@@ -133,14 +133,7 @@ const onRefresh = () => {
                     </div>
                     <div class="status">
                         <van-tag type="primary">
-                            {{ {
-                                'RUNNING': '进行中',
-                                'FINISH': '已完成',
-                                'CLOSED': '已关闭',
-                                'RECRUIT': '招募中',
-                                'AUDITING': '审核中',
-                                'ARBITRATED': '审核未通过'
-                            }[item.status] }}
+                            招募中
                         </van-tag>
                     </div>
                 </div>
@@ -164,18 +157,8 @@ const onRefresh = () => {
                     </div>
                 </div>
                 <div class="btn">
-                    <van-button type="primary" class="get-btn" @click="take(item.id)" v-if="item.status === 'RECRUIT'">
+                    <van-button type="primary" class="get-btn" @click="take(item.id)">
                         抢任务
-                    </van-button>
-                    <van-button v-else type="primary" disabled class="out">
-                        {{
-                            {
-                                'RUNNING': '已被人抢占',
-                                'FINISH': '已结束',
-                                'CLOSED': '已关闭',
-                                'AUDITING': '审核中'
-                            }[item.status]
-                        }}
                     </van-button>
                 </div>
             </van-cell>

@@ -54,10 +54,11 @@ const onLoad = async () => {
     }
 
     ++page.value
+    
     loading.value = false
 
     if (resultList.value.length >= response.data.data.pagination.total) {
-        finished.value = true;
+        finished.value = true
     }
 }
 
@@ -84,7 +85,6 @@ const onSearch = async () => {
     })
     page.value = 1
     const { data: { data } } = await getSearchKeyList(keyword.value, page.value, size.value)
-    console.log(data)
     resultList.value = data.list
 }
 

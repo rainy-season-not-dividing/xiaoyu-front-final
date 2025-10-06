@@ -4,7 +4,7 @@ import { showLoadingToast, closeToast, showFailToast } from 'vant'
 import router from "@/router"
 
 const request = axios.create({
-    baseURL: "http://10.78.156.50:8080",
+    // baseURL: "http://10.78.156.50:8080",
     headers: {
         'Content-Type': 'application/json'
     },

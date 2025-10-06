@@ -107,7 +107,7 @@ const onClear = () => {
                 <van-cell v-for="item in userList" :key="item.id" @click="router.push(`/user/${item.id}`)">
                     <template #title>
                         <div class="user-info">
-                            <img class="avatar" :src="item.avatarUrl || defaultAvatar" />
+                            <img class="avatar" :src="item.avatar_url || defaultAvatar" />
 
                             <div class="info">
                                 <div class="nickname" v-if="keyword && item.nickname.startsWith(keyword)">

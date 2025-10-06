@@ -59,7 +59,7 @@ const onLoad = async () => {
 
     const { data: { data } } = await searchUser(keyword.value, page.value, size.value)
 
-    const strangerList = data.list.filter(item => !item.is_friend)
+    const strangerList = data.list.filter(item => !item.is_friend && item.id !== userStore.userInfo.id)
 
     if (page.value === 1) {
         userList.value = strangerList
@@ -107,7 +107,7 @@ const onRefresh = () => {
                 <van-cell v-for="item in userList" :key="item.id" @click="router.push(`/user/${item.id}`)">
                     <template #title>
                         <div class="user-info">
-                            <img class="avatar" :src="item.avatarUrl || defaultAvatar" />
+                            <img class="avatar" :src="item.avatar_url || defaultAvatar" />
 
                             <div class="info">
                                 <div class="nickname" v-if="keyword && item.nickname.startsWith(keyword)">

@@ -11,25 +11,6 @@ const socketStore = useSocketStore()
 
 const { displayList, system, interactive, chatMap } = storeToRefs(socketStore)
 
-// 监听displayList变化，自动保存到本地
-watch(
-    displayList,
-    (newDisplayList) => {
-        if (window.android && typeof window.android.saveDisplayListToLocal === 'function') {
-            try {
-                // 将displayList转为JSON字符串（原生仅支持基本类型参数）
-                const displayListStr = JSON.stringify(newDisplayList)
-                // 调用原生方法保存
-                window.android.saveDisplayListToLocal(displayListStr)
-            } catch (e) {
-                console.error('保存展示列表到本地失败：', e)
-            }
-        }
-    },
-    { deep: true }
-    // { immediate: true } // 初始化时立即保存一次（避免首次进入无数据）
-)
-
 // 页面加载时，读取本地displayList并恢复页面数据
 onMounted(() => {
     console.log('读取本地展示列表...')
@@ -41,7 +22,7 @@ onMounted(() => {
                 const savedDisplayList = JSON.parse(savedDisplayListStr)
                 // 恢复数据到页面（关键：需根据你的数据结构反向解析）
                 restoreDisplayList(savedDisplayList)
-                console.log('展示列表恢复成功：', displayList)
+                console.log('展示列表恢复成功：', displayList.value)
             }
         } catch (e) {
             console.error('读取本地展示列表失败：', e)
@@ -63,9 +44,9 @@ const restoreDisplayList = (savedList) => {
         if (item.type === 'private_message') {
             chatMap.value.set(item.from_user_id, item)
         }
-        if (item.notification_type === 'system') {
+        if (item.notification_type === 'SYSTEM') {
             system.value = [item] // 保存最新一条
-        } else if (item.notification_type === 'interactive') {
+        } else if (item.notification_type === 'INTERACTION') {
             interactive.value = [item] // 保存最新一条
         }
     })

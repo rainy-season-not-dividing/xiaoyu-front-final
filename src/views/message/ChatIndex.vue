@@ -176,7 +176,9 @@ const publish = async () => {
         'content': content.value,
         'createdAt': new Date().toISOString()
     })
-    chatMap.value.set(parseInt(friendId), {
+
+    const newMap = new Map(chatMap.value)
+    newMap.set(parseInt(friendId), {
         ref_type: 'TEXT',
         type: 'private_message',
         from_user_id: parseInt(friendId),
@@ -186,6 +188,18 @@ const publish = async () => {
         cnt: 0,
         status: 'READ'
     })
+    chatMap.value = newMap
+
+    // chatMap.value.set(parseInt(friendId), {
+    //     ref_type: 'TEXT',
+    //     type: 'private_message',
+    //     from_user_id: parseInt(friendId),
+    //     from_user_nickname: nickname,
+    //     from_user_avatar: friendAvatarUrl,
+    //     content: content.value,
+    //     cnt: 0,
+    //     status: 'READ'
+    // })
     content.value = ''
     // 发送消息后立即滚动
     setTimeout(() => {

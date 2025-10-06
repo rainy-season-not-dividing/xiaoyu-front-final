@@ -6,12 +6,12 @@ export const getAllTaskTag = () => {
 }
 
 // 获取任务列表
-export const getTaskList = ({ page, size, tag_id, status, keyword }) => {
+export const getTaskList = ({ page, size, tagId, status, keyword }) => {
     return request.get('/api/tasks', {
         params: {
             page,
             size,
-            tag_id,
+            tagId,
             status,
             keyword
         }
@@ -118,7 +118,7 @@ export const finishTaskOrder = (task_id) => {
 }
 
 // 转发任务
-export const shareTask = (task_id,shareUserIds) => {
+export const shareTask = (task_id, shareUserIds) => {
     return request.post(`/api/tasks/${task_id}/share`, {
         shareUserIds
     })

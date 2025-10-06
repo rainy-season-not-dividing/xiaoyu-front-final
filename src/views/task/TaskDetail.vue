@@ -47,7 +47,8 @@ const form = ref({
   stats: {
     viewCnt: '',
     orderCnt: ''
-  }
+  },
+  createdAt: ''
 })
 
 onMounted(async () => {
@@ -90,17 +91,6 @@ const showShare = ref(false)
           <!-- 昵称 -->
           <span style="font-weight: bold;">{{ form.nickname }}</span>
         </div>
-      </div>
-      <div class="shrink-0">
-        <!-- 私信咨询 -->
-        <button @click="router.push({
-          path: '/chat',
-          query: {
-            userId: form.publisherId,
-            nickName: form.nickName,
-            avatarUrl: form.avatarUrl
-          }
-        })" class="consult-btn">私信咨询</button>
       </div>
     </div>
 
@@ -175,9 +165,12 @@ const showShare = ref(false)
         分享任务
       </button>
       <!-- 立即报名按钮：带图标 -->
-      <button class="bottom-button ack-button" @click="handleAck">
+      <button class="bottom-button ack-button" @click="handleAck" v-if="form.status === 'RECRUIT'">
         <van-icon name="certificate" color="#fff" class="button-icon" />
         立即报名
+      </button>
+      <button class="forbiden-button" v-else disabled>
+        不可报名
       </button>
     </div>
 
@@ -253,7 +246,7 @@ const showShare = ref(false)
 
 .bottom-bar {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   position: fixed;
   bottom: 0;
@@ -335,8 +328,9 @@ const showShare = ref(false)
 }
 
 .share-button {
-  width: 60%;
+  width: 40%;
   height: 80%;
+  margin-right: 10px;
 }
 
 .share-button .button-icon {
@@ -344,16 +338,22 @@ const showShare = ref(false)
   margin-right: 6px;
 }
 
-.ack-button {
+.ack-button,
+.forbiden-button {
   width: 40%;
   height: 80%;
   background-color: #1989fa;
   color: #fff;
   border: none;
+  margin-left: 10px;
 }
 
 .ack-button .button-icon {
   color: #fff;
   margin-right: 6px;
+}
+
+.forbiden-button {
+  background-color: #c0c4cc;
 }
 </style>

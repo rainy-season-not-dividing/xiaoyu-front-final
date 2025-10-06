@@ -157,6 +157,10 @@ watch([() => dateResult.value, () => timeResult.value], () => {
             <van-field v-model="form.content" rows="5" label="任务内容" type="textarea" maxlength="300"
                 placeholder="请输入任务内容" show-word-limit />
 
+            <div class="upload-label">
+                上传文件
+            </div>
+
             <van-uploader v-model="fileList" :after-read="handleRead" :before-delete="handleDelete" />
 
             <van-field class="reward" v-model="form.reward" label="悬赏金额" type="number"
@@ -196,18 +200,31 @@ watch([() => dateResult.value, () => timeResult.value], () => {
                     @cancel="showTime = false" />
             </van-popup>
 
-            <van-button round block type="primary" native-type="submit" class="submit-btn">
-                {{ isEdit ? '保存修改' : '立即发布' }}
-            </van-button>
+            <div class="btn">
+                <van-button round block type="primary" native-type="submit" class="submit-btn">
+                    {{ isEdit ? '保存修改' : '立即发布' }}
+                </van-button>
+            </div>
         </van-form>
     </div>
 </template>
 
 <style scoped lang="less">
+:deep(.van-uploader) {
+    margin-top: 15px;
+    margin-left: 15px;
+}
+
+.upload-label {
+    margin-top: 15px;
+    margin-left: 15px;
+    font-size: 14px;
+    color: #323233;
+}
+
 .container {
     height: 100vh;
     background-color: white;
-    position: relative;
 
     .form {
         height: 100%;
@@ -289,12 +306,18 @@ watch([() => dateResult.value, () => timeResult.value], () => {
         }
     }
 
-    .submit-btn {
-        position: absolute;
-        bottom: 3%;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 280px;
+    .btn {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        .submit-btn {
+            margin-top: 100px;
+            margin-bottom: 30px;
+            width: 280px;
+        }
     }
+
+
 }
 </style>
