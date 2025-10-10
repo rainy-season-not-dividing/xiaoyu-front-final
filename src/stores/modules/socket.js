@@ -71,12 +71,30 @@ export const useWebSocketStore = defineStore(
 
         // 系统通知数量
         const systemCnt = computed(() => {
-            return system.value?.length || 0
+            if (system.value && system.value.length > 0) {
+                let count = 0
+                system.value.forEach((msg) => {
+                    if (msg.status === 'UNREAD') {
+                        ++count
+                    }
+                })
+                return count
+            }
+            return 0
         })
 
         // 互动通知数量
         const interactiveCnt = computed(() => {
-            return interactive.value?.length || 0
+            if (interactive.value && interactive.value.length > 0) {
+                let count = 0
+                interactive.value.forEach((msg) => {
+                    if (msg.status === 'UNREAD') {
+                        ++count
+                    }
+                })
+                return count
+            }
+            return 0
         })
 
         // 聊天界面回调函数存储
